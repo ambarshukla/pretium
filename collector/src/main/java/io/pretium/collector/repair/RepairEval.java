@@ -127,6 +127,7 @@ public final class RepairEval {
       }
 
       String digest = PageDigest.of(page);
+      PageDigest.DateHint dateHint = PageDigest.dateHint(page);
       String error = verdict.error();
       SourceSpec.Recipe base = current;
       boolean healed = false;
@@ -136,7 +137,7 @@ public final class RepairEval {
       for (int attempt = 1; attempt <= ATTEMPTS && !healed; attempt++) {
         OllamaRepairer.Proposal proposal;
         try {
-          proposal = repairer.propose(base, error, digest);
+          proposal = repairer.propose(base, error, digest, dateHint);
         } catch (IOException e) {
           note.append(" | model error: ").append(e.getMessage());
           break;

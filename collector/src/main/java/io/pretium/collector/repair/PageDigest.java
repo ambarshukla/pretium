@@ -3,6 +3,8 @@ package io.pretium.collector.repair;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,7 +18,37 @@ public final class PageDigest {
 
   static final int MAX_CHARS = 6_000;
 
+  private static final Pattern DATE =
+      Pattern.compile(
+          "\\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|"
+              + "November|December) \\d{4}");
+
   private PageDigest() {}
+
+  /**
+   * Where the page states its date, found by code rather than by the model: the first heading (or
+   * caption) whose own text contains a "26 January 2017" style date. A model kept choosing elements
+   * with no date in them; finding a date is a pattern match, so a program does it.
+   */
+  public record DateHint(String selector, String format, String regex, String text) {}
+
+  public static DateHint dateHint(Path page) throws IOException {
+    Document doc = Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name());
+    for (Element e : doc.select("h1, h2, h3, h4, caption, p, div, span")) {
+      Matcher m = DATE.matcher(e.ownText());
+      if (!m.find()) {
+        continue;
+      }
+      String tag = e.tagName();
+      String selector = tag;
+      if (!tag.equals(doc.selectFirst(tag).tagName()) || doc.selectFirst(tag) != e) {
+        selector = e.cssSelector();
+      }
+      return new DateHint(
+          selector, "d MMMM yyyy", "(\\d{1,2} [A-Za-z]+ \\d{4})", e.ownText().strip());
+    }
+    return null;
+  }
 
   public static String of(Path page) throws IOException {
     Document doc = Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name());

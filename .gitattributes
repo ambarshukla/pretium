@@ -1,0 +1,6 @@
+# Line endings are fixed per file type so the repo builds the same on Windows,
+# Linux and in Docker: shell scripts with CRLF fail on Linux with a baffling error.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.xlsx binary

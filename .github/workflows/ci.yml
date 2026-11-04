@@ -1,0 +1,61 @@
+# CI: every pull request (and main) must pass the Java build (format check,
+# compile with warnings as errors, tests) and the web typecheck and build.
+#
+# One job per concern so each appears as its own required status check.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only: a compromised action in the chain cannot push, tag or comment.
+permissions:
+  contents: read
+
+jobs:
+  java:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v5
+      # The wrapper JAR is an executable in the repository; this proves it is
+      # a genuine Gradle release and not a swapped-in binary.
+      - uses: gradle/actions/wrapper-validation@v5
+      - name: Format check
+        run: ./gradlew spotlessCheck
+      - name: Build and test
+        run: ./gradlew build
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+          retention-days: 7
+          if-no-files-found: ignore
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      # build first: it generates next-env.d.ts, which the typecheck reads.
+      - run: npm run build
+      - run: npm run typecheck

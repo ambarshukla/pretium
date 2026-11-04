@@ -73,3 +73,4 @@ takes a couple of minutes.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md): the choices and their trade-offs
 - [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md): what was built, in order, and what the real data showed
 - [`docs/PROVENANCE.md`](docs/PROVENANCE.md): sources, licences, attribution
+- [`docs/SLO.md`](docs/SLO.md) and [`docs/RUNBOOK.md`](docs/RUNBOOK.md): what "working" means, and what to do when it is not

@@ -56,3 +56,6 @@ Collected through three channels, which must agree:
 `collector/src/test/resources/fixtures/` holds verbatim excerpts of the three ECB
 responses for 3 November 2026 (Source: ECB). The World Bank rows used in tests are three
 real rows from the Q2 2016 survey, copied into the test code with their record ids.
+
+One navigation-menu link (to the ECB press section) was removed from the 3 November 2026 page;
+the rates table and everything the extractor reads are untouched.

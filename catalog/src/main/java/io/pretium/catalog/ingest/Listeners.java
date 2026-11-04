@@ -1,6 +1,6 @@
 package io.pretium.catalog.ingest;
 
-import io.pretium.catalog.reconcile.Reconciler;
+import io.pretium.catalog.reconcile.SettledReconciliation;
 import io.pretium.catalog.store.CatalogStore;
 import io.pretium.events.CollectionRun;
 import io.pretium.events.ProviderQuoteObserved;
@@ -27,12 +27,12 @@ public class Listeners {
   private static final Logger log = LoggerFactory.getLogger(Listeners.class);
 
   private final CatalogStore store;
-  private final Reconciler reconciler;
+  private final SettledReconciliation reconciliation;
   private final JsonMapper json;
 
-  public Listeners(CatalogStore store, Reconciler reconciler, JsonMapper json) {
+  public Listeners(CatalogStore store, SettledReconciliation reconciliation, JsonMapper json) {
     this.store = store;
-    this.reconciler = reconciler;
+    this.reconciliation = reconciliation;
     this.json = json;
   }
 
@@ -49,7 +49,7 @@ public class Listeners {
     store.saveRates(rates);
     Set<LocalDate> dates = new TreeSet<>();
     rates.forEach(r -> dates.add(r.rateDate()));
-    reconciler.reconcile(dates);
+    reconciliation.touched(dates);
   }
 
   @KafkaListener(topics = Topics.PROVIDER_QUOTES, batch = "true")

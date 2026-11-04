@@ -69,3 +69,11 @@ and the three partitions of the rates topic deliver one day's currencies at diff
 moments, so for a moment a channel looks as if it lacks a currency it actually sent.
 Harmless, because the breaks close themselves, but it is noise in exactly the signal that
 selector repair will rely on. Next step: reconcile once per completed collection run.
+
+## 2026-11-04 · Reconcile settled dates only
+
+**Built.** Each batch of rates now only marks its dates as touched; a scheduled task
+reconciles a date once nothing has touched it for 30 seconds (`SettledReconciliation`).
+
+**Verified.** A fresh catalog replaying every topic into an empty database: 90,876 rates,
+**0 breaks** (previously 14 transient ones on the same load).

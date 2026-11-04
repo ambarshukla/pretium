@@ -54,3 +54,18 @@ with fewer than 2% of prices quarantined.
 **Final state of the first slice.** 388,906 prices published clean (95.4%), 18,715 with
 warnings (4.6%), 230 quarantined (0.06%). All three ECB channels agree on all 29
 currencies.
+
+## 2026-11-04 · Hosted
+
+**Built.** The stack runs on one 2-CPU, 4 GB host behind the existing Caddy proxy, from a
+`git archive` of one commit, with images built on the host one at a time. Memory at rest
+after the full first load: Kafka 358 MB, catalog 268 MB, collector 233 MB, Postgres
+109 MB, web 50 MB: about 1 GB for the whole stack.
+
+**Observed.** The hosted first load produced exactly the local counts (407,851 prices:
+388,906 / 18,715 / 230). It also produced **14 reconciliation breaks of kind `MISSING`,
+all of which resolved themselves within the load**: reconciliation runs per Kafka batch,
+and the three partitions of the rates topic deliver one day's currencies at different
+moments, so for a moment a channel looks as if it lacks a currency it actually sent.
+Harmless, because the breaks close themselves, but it is noise in exactly the signal that
+selector repair will rely on. Next step: reconcile once per completed collection run.

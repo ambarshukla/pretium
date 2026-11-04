@@ -42,6 +42,7 @@ public class ComparisonController {
             from provider_quote where status <> 'QUARANTINED' group by 1, 2)
         select q.send_country as "send", max(q.send_country_name) as "sendName",
                q.receive_country as "receive", max(q.receive_country_name) as "receiveName",
+               max(q.send_currency) as "sendCurrency", max(q.send_amount) as "sendAmount",
                l.period as "latestPeriod", count(distinct q.provider) as "providers",
                min(q.total_cost_pct) as "cheapestPct", round(avg(q.total_cost_pct), 2) as "averagePct"
           from provider_quote q join latest l using (send_country, receive_country, period)

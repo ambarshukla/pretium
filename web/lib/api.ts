@@ -29,6 +29,9 @@ export type Corridor = {
   sendName: string;
   receive: string;
   receiveName: string;
+  /** What the surveyed amount is in the sending country's own currency. */
+  sendCurrency: string;
+  sendAmount: number;
   latestPeriod: string;
   providers: number;
   cheapestPct: number;

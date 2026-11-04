@@ -1,5 +1,6 @@
 import { api, apiOrNull, findings, num, period, type Comparison, type Corridor, type HistoryPoint } from "@/lib/api";
 import { HistoryChart } from "./history-chart";
+import { Picker } from "./picker";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,11 @@ export default async function ComparePage({ searchParams }: { searchParams: Sear
   const amount = params.amount === "500" ? 500 : 200;
   const [send, receive] = (params.corridor ?? "GBR-IND").split("-");
 
-  const corridors = (await apiOrNull<Corridor[]>(`/api/v1/corridors?amountUsd=${amount}`)) ?? [];
+  // Both survey amounts, so the picker can show each in the sender's own currency.
+  const [small, large] = await Promise.all([
+    apiOrNull<Corridor[]>("/api/v1/corridors?amountUsd=200"),
+    apiOrNull<Corridor[]>("/api/v1/corridors?amountUsd=500"),
+  ]);
   const qs = new URLSearchParams({ send, receive, amountUsd: String(amount) });
   if (params.period) qs.set("period", params.period);
   const comparison = await apiOrNull<Comparison>(`/api/v1/comparisons?${qs}`);
@@ -33,26 +38,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Sear
         shown.
       </p>
 
-      <form className="picker panel" method="get">
-        <label>
-          Corridor
-          <select name="corridor" defaultValue={`${send}-${receive}`}>
-            {corridors.map((c) => (
-              <option key={`${c.send}-${c.receive}`} value={`${c.send}-${c.receive}`}>
-                {c.sendName} → {c.receiveName}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Amount
-          <select name="amount" defaultValue={String(amount)}>
-            <option value="200">≈ USD 200</option>
-            <option value="500">≈ USD 500</option>
-          </select>
-        </label>
-        <button type="submit">Compare</button>
-      </form>
+      <Picker small={small ?? []} large={large ?? []} send={send} receive={receive} amount={amount} />
 
       {!comparison ? (
         <p className="panel" style={{ marginTop: 16 }}>

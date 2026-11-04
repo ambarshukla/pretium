@@ -9,9 +9,11 @@ on:
   push:
     branches: [main]
 
+# A newer push cancels an older run of the same pull request, but never a run on main:
+# cancelling one could stop a deploy half way.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Read-only: a compromised action in the chain cannot push, tag or comment.
 permissions:
@@ -59,3 +61,52 @@ jobs:
       # build first: it generates next-env.d.ts, which the typecheck reads.
       - run: npm run build
       - run: npm run typecheck
+
+  # Only what is on main, and only once the checks above have passed, reaches the host.
+  # The key in PRETIUM_DEPLOY_KEY cannot get a shell there: the host's sshd runs a fixed
+  # script (see deploy/README.md) whatever this job asks for, so a change to this file
+  # cannot widen what the deploy may do.
+  deploy:
+    needs: [java, web]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Two merges in quick succession queue instead of building over each other.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy
+        env:
+          DEPLOY_KEY: ${{ secrets.PRETIUM_DEPLOY_KEY }}
+          # user@host; the host is not public, so it lives in a secret too.
+          DEPLOY_TARGET: ${{ secrets.PRETIUM_DEPLOY_TARGET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_KEY" ] || [ -z "$DEPLOY_TARGET" ]; then
+            echo "PRETIUM_DEPLOY_KEY / PRETIUM_DEPLOY_TARGET are not set; nothing deployed." >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" >~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          ssh-keyscan -H "${DEPLOY_TARGET#*@}" >>~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o IdentitiesOnly=yes \
+            "$DEPLOY_TARGET" deploy
+
+      # The deploy is only believed once the live site answers through the proxy.
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          for url in https://pretium.ambarshukla.dev/ https://pretium.ambarshukla.dev/ops; do
+            for attempt in $(seq 1 12); do
+              if curl -fsS --max-time 20 "$url" >/dev/null; then
+                echo "$url live after ${attempt} attempt(s)"
+                break
+              fi
+              if [ "$attempt" = 12 ]; then
+                echo "$url did not answer within the time allowed" >&2
+                exit 1
+              fi
+              sleep 5
+            done
+          done

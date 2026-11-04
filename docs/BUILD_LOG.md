@@ -77,3 +77,27 @@ reconciles a date once nothing has touched it for 30 seconds (`SettledReconcilia
 
 **Verified.** A fresh catalog replaying every topic into an empty database: 90,876 rates,
 **0 breaks** (previously 14 transient ones on the same load).
+
+## 2026-11-04 · Selector repair, second round
+
+**Built.** The first evaluation healed 0 of 36 archived pages: the model kept choosing
+elements with no date in them and never reached the rows. Finding a date in text is a
+pattern match, so a program now does it (`PageDigest.dateHint`: the first heading whose own
+text contains "26 January 2017"), and the model proposes only the row, currency and rate
+selectors. The prompt also says class names change between versions and to prefer visible
+structure.
+
+**Observed.** Same 36 real pages (2017 to 2019), same local model, replayed newest first:
+
+| | before | after |
+|---|---|---|
+| Pages read correctly | 0 | **35 of 36** (33 by a recipe already known, 2 healed) |
+| Model proposals | 72 | 4 |
+| Model time | 5,439 s | 299 s |
+| Wrong numbers accepted | 0 | 0 |
+
+Three recipes were enough for 2017 to 2019. The one failure (April 2019) is a snapshot that
+holds only 13 of 36 currency rows: the archived copy is truncated, and the verifier correctly
+refused to accept a partial read. Not yet shown: pages from 2020 onwards, and a model that
+proposes a wrong selector (none did, so the "blocked wrong numbers" path is still untested
+on real data).

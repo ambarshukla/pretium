@@ -288,3 +288,14 @@ details summary {
 .prose li {
   margin-bottom: 6px;
 }
+
+button.swap {
+  font-size: 18px;
+  line-height: 1;
+  padding: 7px 12px;
+}
+
+button.swap:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

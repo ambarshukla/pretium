@@ -37,6 +37,12 @@ public final class OllamaRepairer {
       The relevant part of the new page:
       %s
 
+      A program has already found the date on this page, so ignore the date keys; it will fill
+      them in. Your job is the table. Look at the markup above: choose "rowSelector" so that it
+      matches exactly one element per currency (class names change between page versions, so
+      prefer the structure you can see, such as "table tbody tr"), and choose "currencySelector"
+      and "rateSelector" that work inside one such row.
+
       Reply with JSON only, with exactly these keys:
         "dateSelector":     CSS selector for the element whose text is the date of the rates
         "dateFormat":       Java DateTimeFormatter pattern for that text, e.g. "d MMMM yyyy"
@@ -67,7 +73,8 @@ public final class OllamaRepairer {
   public record Proposal(
       SourceSpec.Recipe recipe, long millis, int promptTokens, int outputTokens, String raw) {}
 
-  public Proposal propose(SourceSpec.Recipe current, String error, String digest)
+  public Proposal propose(
+      SourceSpec.Recipe current, String error, String digest, PageDigest.DateHint date)
       throws IOException, InterruptedException {
     String prompt = PROMPT.formatted(json.writeValueAsString(current.settings()), error, digest);
     Map<String, Object> body = new LinkedHashMap<>();
@@ -113,6 +120,12 @@ public final class OllamaRepairer {
       } else if (!key.equals("dateRegex")) {
         settings.put(key, current.get(key, ""));
       }
+    }
+    if (date != null) {
+      // Deterministic part of the repair: the date is found by pattern, not proposed by the model.
+      settings.put("dateSelector", date.selector());
+      settings.put("dateFormat", date.format());
+      settings.put("dateRegex", date.regex());
     }
     return new Proposal(
         new SourceSpec.Recipe(current.version() + 1, settings),

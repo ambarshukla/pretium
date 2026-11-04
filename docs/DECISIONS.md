@@ -111,3 +111,29 @@ The choices that shape pretium, why they were made, and what was given up. Newes
   The browser never reaches the catalog; only the web container joins the proxy network.
 - **Why:** the API's shape can change without breaking anyone's browser cache, and Postgres,
   Kafka and the services have no public surface at all.
+
+## D-014 · Reconcile a date once it has settled
+
+- **Choice:** batches mark dates as touched; a date is reconciled after 30 seconds with no
+  new rates for it.
+- **Why:** per-batch reconciliation raised false `MISSING` breaks while one day's currencies
+  were still arriving on other partitions. Ordering across partitions is not guaranteed, so
+  "wait until it is quiet" is the honest condition. Breaks must be signal, because selector
+  repair will act on them.
+- **Given up:** up to 40 seconds of delay before a real break appears. Irrelevant for daily
+  data.
+
+## D-015 · Selector repair: the model proposes where, the reference decides
+
+- **Choice:** when a scraped recipe fails, a model is shown the old recipe, the error and a
+  digest of the new page, and asked for new **selectors**, never values. The candidate is
+  accepted only if every rate it reads equals the structured channel's rate for that day
+  exactly, with at least 90% of currencies found. Otherwise a person is asked.
+- **Why:** a selector can be verified; a number produced by a model cannot be verified
+  against anything but itself. With an exact-match oracle, a false repair cannot be
+  accepted by construction, and the interesting metric becomes how many proposals *would*
+  have published wrong numbers without it.
+- **Model:** local (Ollama), at temperature 0 so a proposal is repeatable. No data leaves
+  the machine, and the marginal cost of a repair is CPU time.
+- **Evaluated** on the page's real history: monthly archived copies from 2017 onwards
+  (Internet Archive), with the true values from the SDMX history.

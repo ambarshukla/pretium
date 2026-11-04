@@ -114,8 +114,8 @@ first against the same local model, with every read checked against the official
 | Model proposals | 4 (2 accepted), about 74 s each |
 | Wrong numbers accepted or published | 0 |
 
-Three recipes cover nine years of the page: the layout changed twice (2019 and 2020), and
-the model was needed only at those two points. After 2020 the page did not change again.
+Three recipes cover nine years of the page: the layout changed twice (by December 2020 and again by January 2019), and
+the model was needed only at those two points. Since 2021 the page has not changed.
 Not yet shown: a model that proposes a wrong selector (none did, so the path that blocks
 bad numbers is still untested on real data), and breakage in the future, which can only be
 observed live.

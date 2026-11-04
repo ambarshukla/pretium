@@ -1,0 +1,37 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: pretium-collector
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # acks=all with idempotence: a message is only "sent" once the broker has it
+      # durably, and a retry can never write it twice.
+      acks: all
+      compression-type: zstd
+      properties:
+        linger.ms: 20
+        enable.idempotence: true
+  task:
+    scheduling:
+      pool:
+        size: 2
+
+pretium:
+  raw-dir: ${PRETIUM_RAW_DIR:./data/raw}
+  collect-on-startup: ${PRETIUM_COLLECT_ON_STARTUP:false}
+  fetch:
+    # Names the project and where to read about it, so a site operator who sees
+    # us in their logs knows who we are and how to object.
+    user-agent: "pretium/0.1 (+https://github.com/ambarshukla/pretium; open-data collector)"
+    per-host-gap: 5s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

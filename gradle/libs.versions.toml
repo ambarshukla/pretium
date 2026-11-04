@@ -1,0 +1,20 @@
+# Single source of truth for every third-party version in the build.
+# Modules reference these aliases, never literal version strings, so a bump
+# happens in one place and cannot partially land across modules.
+
+[versions]
+springBoot = "4.1.0"
+springDependencyManagement = "1.1.7"
+spotless = "8.10.0"
+jsoup = "1.24.1"
+fastexcel = "0.20.2"
+
+[libraries]
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+fastexcel-reader = { module = "org.dhatim:fastexcel-reader", version.ref = "fastexcel" }
+fastexcel-writer = { module = "org.dhatim:fastexcel", version.ref = "fastexcel" }
+
+[plugins]
+springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }
+springDependencyManagement = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

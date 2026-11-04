@@ -1,0 +1,25 @@
+# The same reference rates again, scraped from the ECB's public web page.
+# This is the one source read with CSS selectors rather than a data format,
+# so it is the one that breaks when the page is redesigned. The XML and SDMX
+# channels carry the same numbers, which is what makes a repaired recipe
+# checkable: a repair is only accepted if it reads exactly what they say.
+id: ecb-reference-html
+name: ECB reference rates (public web page)
+publisher: European Central Bank
+licence: >-
+  ECB website content may be reproduced provided the source is acknowledged.
+  robots.txt allows this page.
+homepage: https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html
+url: https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html
+format: HTML_RATE_TABLE
+cron: "0 30 16 * * MON-FRI"
+zone: Europe/Berlin
+recipe:
+  version: 1
+  settings:
+    base: EUR
+    dateSelector: div.jumbo-box h3
+    dateFormat: d MMMM yyyy
+    rowSelector: table.forextable tbody tr
+    currencySelector: td.currency
+    rateSelector: span.rate

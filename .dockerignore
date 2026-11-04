@@ -1,0 +1,10 @@
+**/build
+**/.gradle
+.gradle
+data
+web
+infra
+deploy
+docs
+*.md
+.git

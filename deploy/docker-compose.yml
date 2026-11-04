@@ -1,0 +1,112 @@
+# The hosted deployment: see deploy/README.md.
+#
+#   postgres   the catalog's database
+#   kafka      one broker (KRaft), the backbone between collector and catalog
+#   collector  fetches sources on their schedules, keeps the raw evidence
+#   catalog    checks, stores, reconciles and serves the API (internal only)
+#   web        the public site, behind the host's reverse proxy
+#
+# Only "web" joins the proxy network. Postgres, Kafka, the collector and the
+# catalog publish no ports and are reachable only from inside this project.
+#
+# Memory: limits are set so the whole stack fits a 4 GB host alongside other
+# projects. Each JVM's heap is about 60% of its container limit; the rest is
+# metaspace, threads, direct buffers and the JIT.
+name: pretium
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: pretium-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pretium
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in deploy/.env}
+      POSTGRES_DB: pretium
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "work_mem=8MB", "-c", "max_connections=30"]
+    volumes:
+      - ${PRETIUM_HOST_DATA:-./data}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pretium -d pretium"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 384m
+
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: pretium-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      # Keep events for 90 days: long enough to rebuild the catalog from Kafka
+      # after a bad deploy, short enough to bound the disk.
+      KAFKA_LOG_RETENTION_HOURS: 2160
+      KAFKA_HEAP_OPTS: "-Xmx384m -Xms256m"
+    volumes:
+      - ${PRETIUM_HOST_DATA:-./data}/kafka:/var/lib/kafka/data
+    mem_limit: 768m
+
+  collector:
+    build:
+      context: ..
+      args: { MODULE: collector }
+    image: pretium-collector:latest
+    container_name: pretium-collector
+    restart: unless-stopped
+    depends_on: [kafka]
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      PRETIUM_RAW_DIR: /data/raw
+      PRETIUM_COLLECT_ON_STARTUP: ${PRETIUM_COLLECT_ON_STARTUP:-false}
+      JAVA_TOOL_OPTIONS: "-Xmx320m -XX:+UseSerialGC"
+    volumes:
+      - ${PRETIUM_HOST_DATA:-./data}/raw:/data/raw
+    mem_limit: 560m
+
+  catalog:
+    build:
+      context: ..
+      args: { MODULE: catalog }
+    image: pretium-catalog:latest
+    container_name: pretium-catalog
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      DB_URL: jdbc:postgresql://postgres:5432/pretium
+      DB_USER: pretium
+      DB_PASSWORD: ${DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: "-Xmx300m -XX:+UseSerialGC"
+    mem_limit: 512m
+
+  web:
+    build:
+      context: ../web
+    image: pretium-web:latest
+    container_name: pretium-web
+    restart: unless-stopped
+    depends_on: [catalog]
+    environment:
+      CATALOG_URL: http://catalog:8082
+    networks: [default, proxy]
+    mem_limit: 256m
+
+networks:
+  # The network the host's reverse proxy runs on, so it can reach "web" by
+  # container name. Named in deploy/.env (PROXY_NETWORK).
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?set PROXY_NETWORK in deploy/.env}

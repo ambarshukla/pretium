@@ -1,0 +1,15 @@
+# The same reference rates through the ECB Data Portal's SDMX API (CSV).
+# The first run backfills from 2016 (about 5 MB); daily runs fetch the last
+# ten observations per currency, which also picks up any late correction.
+id: ecb-sdmx-exr
+name: ECB reference rates (SDMX data API)
+publisher: European Central Bank
+licence: >-
+  ECB statistics may be reproduced free of charge provided the source is
+  acknowledged ("Source: ECB").
+homepage: https://data.ecb.europa.eu/data/datasets/EXR
+url: https://data-api.ecb.europa.eu/service/data/EXR/D..EUR.SP00.A?lastNObservations=10&detail=dataonly&format=csvdata
+backfillUrl: https://data-api.ecb.europa.eu/service/data/EXR/D..EUR.SP00.A?startPeriod=2016-01-01&detail=dataonly&format=csvdata
+format: ECB_SDMX_CSV
+cron: "0 25 16 * * MON-FRI"
+zone: Europe/Berlin

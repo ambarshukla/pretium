@@ -1,0 +1,22 @@
+# World Bank Remittance Prices Worldwide: what providers charge to send 200
+# and 500 US dollars' worth across about 350 corridors, surveyed every
+# quarter since 2011. Fees, exchange rates and FX margins, provider by
+# provider. About 50 MB; fetched with a conditional request, so an unchanged
+# file costs one round trip, not a download.
+id: wb-rpw
+name: World Bank Remittance Prices Worldwide (complete dataset)
+publisher: The World Bank
+licence: >-
+  Creative Commons Attribution 4.0. Required attribution: "The World Bank,
+  Remittance Prices Worldwide, available at http://remittanceprices.worldbank.org".
+  Use must not imply World Bank endorsement.
+homepage: https://datacatalog.worldbank.org/search/dataset/0037898/remittance-prices-worldwide
+url: https://datacatalogfiles.worldbank.org/ddh-published/0037898/DR0095523/rpw_dataset_2011_2025_q3.xlsx
+format: RPW_XLSX
+# Quarterly data; a weekly look is plenty.
+cron: "0 0 6 * * MON"
+zone: UTC
+recipe:
+  version: 1
+  settings:
+    sheet: Dataset (from Q2 2016)

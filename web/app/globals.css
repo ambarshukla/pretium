@@ -1,0 +1,290 @@
+:root {
+  --bg: #f7f8f6;
+  --panel: #ffffff;
+  --ink: #17201b;
+  --muted: #5d6a62;
+  --line: #dfe5e0;
+  --accent: #1f7a4d;
+  --accent-soft: #e3f2ea;
+  --warn: #9a6400;
+  --warn-soft: #fdf3dc;
+  --bad: #a3292b;
+  --bad-soft: #fbe5e5;
+  --info-soft: #eaf0f8;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111513;
+    --panel: #181e1a;
+    --ink: #e6ece8;
+    --muted: #98a59d;
+    --line: #2a332d;
+    --accent: #5cc58f;
+    --accent-soft: #1d3327;
+    --warn: #e2b04a;
+    --warn-soft: #3a2f16;
+    --bad: #f08585;
+    --bad-soft: #3d1f20;
+    --info-soft: #1e2733;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 20px;
+  text-decoration: none;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.top nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.top nav a {
+  text-decoration: none;
+  color: var(--muted);
+}
+
+.top nav a:hover {
+  color: var(--ink);
+}
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+footer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+}
+
+h1 {
+  font-size: 26px;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 32px 0 8px;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0 0 20px;
+  max-width: 760px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+form.picker {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+form.picker label {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--muted);
+  gap: 4px;
+}
+
+select,
+button {
+  font: inherit;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td.n,
+th.n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin: 2px 4px 2px 0;
+  white-space: nowrap;
+}
+
+.chip.ok {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip.WARN {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.chip.ERROR {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.chip.INFO {
+  background: var(--info-soft);
+  color: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.stat .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat .value {
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.cheapest td {
+  background: var(--accent-soft);
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+.prose {
+  max-width: 780px;
+}
+
+.prose li {
+  margin-bottom: 6px;
+}

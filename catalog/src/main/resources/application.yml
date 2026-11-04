@@ -1,0 +1,41 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: pretium-catalog
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pretium}
+    username: ${DB_USER:pretium}
+    password: ${DB_PASSWORD:pretium}
+    hikari:
+      maximum-pool-size: 5
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      group-id: pretium-catalog
+      # A new consumer group starts from the beginning of each topic, so a fresh
+      # catalog rebuilds itself from Kafka.
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 1000
+
+pretium:
+  reconcile:
+    reference: ecb-sdmx-exr
+  # Freshness targets. ECB rates are published on TARGET business days only, so a
+  # Monday morning is legitimately three days after Friday's rates: 96 hours
+  # covers a weekend plus one holiday.
+  freshness:
+    ecb-sdmx-exr: 96h
+    ecb-eurofxref-daily: 96h
+    ecb-reference-html: 96h
+    # Weekly check of a quarterly dataset.
+    wb-rpw: 8d
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

@@ -137,3 +137,20 @@ The choices that shape pretium, why they were made, and what was given up. Newes
   the machine, and the marginal cost of a repair is CPU time.
 - **Evaluated** on the page's real history: monthly archived copies from 2017 onwards
   (Internet Archive), with the true values from the SDMX history.
+
+## D-016 · Merging to main deploys, through a key that can do only that
+
+- **Choice:** the `deploy` job in CI runs only on `main`, only after the Java and web checks
+  pass, and asks the host for one thing, `deploy`. The SSH key it holds is pinned on the
+  host to a forced command, so it cannot open a shell or run anything else.
+- **Why:** deploying by hand (copy files, rebuild, restart) depends on someone remembering
+  every step, can ship code that never passed the checks, and leaves no record of what is
+  running. Handing CI a general-purpose key to the host would make a compromised workflow
+  equal to a compromised host; a forced-command key limits the damage to "redeploy main".
+- **The script is not in the repository** so that a change to `main` cannot widen what the
+  key may do. Its checksum is logged on every run.
+- **Also changed:** CI no longer cancels a run on `main` when a newer push arrives (it still
+  does for pull requests), because cancelling could stop a deploy half way. Deploys queue.
+- **Cost:** the host builds the images itself, one at a time (about 4 GB shared with other
+  projects), so a deploy takes several minutes. A container registry would be faster and is
+  not worth its cost at this size.

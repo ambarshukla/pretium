@@ -55,3 +55,54 @@ pretium.example.com {
 | Re-extract even if unchanged | add `?force=true` |
 | Replay every event through the checks | stop `catalog`, then `docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group pretium-catalog --reset-offsets --to-earliest --all-topics --execute`, then start `catalog` |
 | Database shell | `docker compose exec postgres psql -U pretium` |
+
+## Updating
+
+Merging to `main` deploys, once the checks have passed: the `deploy` job in
+[`ci.yml`](../.github/workflows/ci.yml) connects to the host and asks for `deploy`, then
+checks that the public site answers (decision D-016).
+
+The key it uses cannot get a shell on the host. `~/.ssh/authorized_keys` pins it to one
+script with a forced command, so whatever the client asks to run, sshd runs that script
+instead:
+
+```
+command="/opt/pretium/bin/deploy.sh",restrict ssh-ed25519 AAAA... pretium-deploy
+```
+
+`/opt/pretium/bin/deploy.sh` is root-owned and deliberately **not** part of this
+repository: if it were, a push to `main` could change what the key is permitted to do, and
+the forced command would stop being a boundary. What it does:
+
+```bash
+case "${SSH_ORIGINAL_COMMAND:-}" in
+  deploy)
+    flock /opt/pretium/.deploy.lock                   # one deploy at a time
+    cd /opt/pretium/src && git fetch origin main && git reset --hard origin/main
+    cd deploy
+    for s in collector catalog web; do docker compose build --quiet "$s"; done   # one by one: memory
+    docker compose up -d                              # recreates only what changed
+    docker inspect ... pretium-{postgres,kafka,collector,catalog,web}   # all must be running
+    docker exec pretium-web node -e "fetch('http://127.0.0.1:3000/ops')..."     # and serving
+    git rev-parse HEAD > /opt/pretium/DEPLOYED_COMMIT
+    ;;
+  *) exit 1 ;;                                        # anything else is refused and logged
+esac
+```
+
+A container that reports `running` is not necessarily serving, so the script also waits
+(up to a minute) for the web server to answer a real page, and the workflow then waits for
+the public URL. A deploy that cannot be reached fails rather than being recorded.
+
+Two repository secrets drive it: `PRETIUM_DEPLOY_KEY` (the private half) and
+`PRETIUM_DEPLOY_TARGET` (`user@host`; the host is not public, so it is a secret too).
+
+A deploy ships code, not data: collection schedules and the database are untouched.
+
+By hand, if the automatic deploy is unavailable:
+
+```bash
+ssh HOST 'cd /opt/pretium/src && git fetch origin main && git reset --hard origin/main \
+  && cd deploy && docker compose build collector && docker compose build catalog \
+  && docker compose build web && docker compose up -d'
+```

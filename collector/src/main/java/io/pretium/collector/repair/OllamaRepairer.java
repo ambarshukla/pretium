@@ -43,6 +43,8 @@ public final class OllamaRepairer {
         "rowSelector":      CSS selector matching one element per currency
         "currencySelector": CSS selector, relative to a row, for the 3-letter currency code
         "rateSelector":     CSS selector, relative to a row, for the rate number
+        "dateRegex":        only if the date is part of longer text: a Java regex whose first
+                            group captures just the date; otherwise null
       Do not include any rates or other values from the page, only selectors.
       """;
 
@@ -98,10 +100,19 @@ public final class OllamaRepairer {
     settings.put("base", current.get("base", "EUR"));
     for (String key :
         new String[] {
-          "dateSelector", "dateFormat", "rowSelector", "currencySelector", "rateSelector"
+          "dateSelector",
+          "dateFormat",
+          "rowSelector",
+          "currencySelector",
+          "rateSelector",
+          "dateRegex"
         }) {
       JsonNode value = proposed.path(key);
-      settings.put(key, value.isString() ? value.asString() : current.get(key, ""));
+      if (value.isString() && !value.asString().isBlank()) {
+        settings.put(key, value.asString());
+      } else if (!key.equals("dateRegex")) {
+        settings.put(key, current.get(key, ""));
+      }
     }
     return new Proposal(
         new SourceSpec.Recipe(current.version() + 1, settings),

@@ -128,7 +128,7 @@ The choices that shape pretium, why they were made, and what was given up. Newes
 - **Choice:** when a scraped recipe fails, a model is shown the old recipe, the error and a
   digest of the new page, and asked for new **selectors**, never values. The candidate is
   accepted only if every rate it reads equals the structured channel's rate for that day
-  exactly, with at least 90% of currencies found. Otherwise a person is asked.
+  exactly, with at least 80% of currencies found (the SDMX API also carries indicative rates that never appear on the page). Otherwise a person is asked.
 - **Why:** a selector can be verified; a number produced by a model cannot be verified
   against anything but itself. With an exact-match oracle, a false repair cannot be
   accepted by construction, and the interesting metric becomes how many proposals *would*

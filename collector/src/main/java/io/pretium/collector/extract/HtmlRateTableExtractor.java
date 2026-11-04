@@ -9,6 +9,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -58,18 +61,34 @@ public class HtmlRateTableExtractor implements Extractor {
     if (dateElement == null) {
       throw new ExtractionException("dateSelector '" + dateSelector + "' matched nothing");
     }
+    // Optional dateRegex: when the date sits inside longer text ("Reference rates: 26 January
+    // 2017", as the page had it in 2017), its first group picks the date out.
+    String dateText = dateElement.text().strip();
+    String dateRegex = recipe.get("dateRegex", null);
+    if (dateRegex != null) {
+      Matcher m;
+      try {
+        m = Pattern.compile(dateRegex).matcher(dateText);
+      } catch (PatternSyntaxException e) {
+        throw new ExtractionException("dateRegex '" + dateRegex + "' is not a valid regex", e);
+      }
+      if (!m.find() || m.groupCount() < 1) {
+        throw new ExtractionException(
+            "dateRegex '" + dateRegex + "' found no date group in '" + dateText + "'");
+      }
+      dateText = m.group(1).strip();
+    }
     LocalDate date;
     try {
       date =
           LocalDate.parse(
-              dateElement.text().strip(),
-              DateTimeFormatter.ofPattern(recipe.require("dateFormat"), Locale.ENGLISH));
-    } catch (DateTimeParseException e) {
+              dateText, DateTimeFormatter.ofPattern(recipe.require("dateFormat"), Locale.ENGLISH));
+    } catch (DateTimeParseException | IllegalArgumentException e) {
       throw new ExtractionException(
           "dateSelector '"
               + dateSelector
               + "' found '"
-              + dateElement.text()
+              + dateText
               + "', which is not a date in format '"
               + recipe.require("dateFormat")
               + "'",

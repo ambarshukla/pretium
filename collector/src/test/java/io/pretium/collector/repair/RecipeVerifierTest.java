@@ -69,4 +69,29 @@ class RecipeVerifierTest {
     assertThat(v.accepted()).isFalse();
     assertThat(v.error()).contains("table.rates tr");
   }
+
+  /**
+   * The page as archived on 26 January 2017 (Internet Archive): no jumbo-box, a differently named
+   * table, and the date inside a heading. Today's recipe fails on it; a recipe written for that
+   * layout, with a dateRegex, reads all 31 currencies exactly as the SDMX history has them.
+   */
+  @Test
+  void theArchived2017LayoutNeedsADifferentRecipe() throws Exception {
+    RecipeVerifier verifier =
+        new RecipeVerifier(ReferenceTruth.fromSdmxCsv(fixture("ecb-sdmx-2017-01-26.csv")));
+    Path page = fixture("ecb-reference-2017-01-26-archived.html");
+
+    assertThat(verifier.verify(page, new SourceSpec.Recipe(1, RECIPE)).error())
+        .contains("div.jumbo-box h3");
+
+    Map<String, String> v2 = new HashMap<>(RECIPE);
+    v2.put("dateSelector", "h2");
+    v2.put("dateRegex", ":\s*(.+)$");
+    v2.put("rowSelector", "table.ecb-forexTable tbody tr");
+    RecipeVerifier.Verdict v = verifier.verify(page, new SourceSpec.Recipe(2, v2));
+
+    assertThat(v.accepted()).as(String.valueOf(v.error())).isTrue();
+    assertThat(v.date()).isEqualTo(LocalDate.of(2017, 1, 26));
+    assertThat(v.matched()).isEqualTo(31);
+  }
 }

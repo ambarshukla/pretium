@@ -2,6 +2,7 @@ package io.pretium.catalog.ingest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pretium.events.ProviderQuoteObserved;
 import io.pretium.events.ProviderQuoteObserved.Tier;
 import io.pretium.events.ReferenceRateObserved;
@@ -44,6 +45,7 @@ class CatalogIntegrationTest {
   @Autowired KafkaTemplate<String, String> producer;
   @Autowired JsonMapper json;
   @Autowired JdbcTemplate jdbc;
+  @Autowired MeterRegistry meters;
 
   static final String RUN = UUID.randomUUID().toString();
 
@@ -139,6 +141,12 @@ class CatalogIntegrationTest {
     assertThat(jdbc.queryForObject("select count(*) from reference_rate", Integer.class))
         .isEqualTo(4);
     assertThat(jdbc.queryForObject("select count(*) from value_revision", Integer.class)).isZero();
+
+    // The metrics a dashboard reads: two quotes stored, one of them quarantined; the four rates
+    // plus the redelivered one counted as received.
+    assertThat(meters.get("pretium.catalog.quotes.stored").counter().count()).isEqualTo(2.0);
+    assertThat(meters.get("pretium.catalog.prices.quarantined").counter().count()).isEqualTo(1.0);
+    assertThat(meters.get("pretium.catalog.rates.stored").counter().count()).isEqualTo(5.0);
   }
 
   ReferenceRateObserved rate(String channel, String currency, String value) {

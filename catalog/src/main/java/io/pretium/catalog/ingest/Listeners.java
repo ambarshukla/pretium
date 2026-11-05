@@ -1,5 +1,6 @@
 package io.pretium.catalog.ingest;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pretium.catalog.reconcile.SettledReconciliation;
 import io.pretium.catalog.store.CatalogStore;
 import io.pretium.events.CollectionRun;
@@ -29,8 +30,14 @@ public class Listeners {
   private final CatalogStore store;
   private final SettledReconciliation reconciliation;
   private final JsonMapper json;
+  private final MeterRegistry meters;
 
-  public Listeners(CatalogStore store, SettledReconciliation reconciliation, JsonMapper json) {
+  public Listeners(
+      CatalogStore store,
+      SettledReconciliation reconciliation,
+      JsonMapper json,
+      MeterRegistry meters) {
+    this.meters = meters;
     this.store = store;
     this.reconciliation = reconciliation;
     this.json = json;
@@ -40,6 +47,10 @@ public class Listeners {
   public void run(String message) {
     CollectionRun run = json.readValue(message, CollectionRun.class);
     store.saveRun(run);
+    meters
+        .counter(
+            "pretium.catalog.runs.stored", "source", run.sourceId(), "status", run.status().name())
+        .increment();
   }
 
   @KafkaListener(topics = Topics.REFERENCE_RATES, batch = "true")
@@ -47,6 +58,7 @@ public class Listeners {
     List<ReferenceRateObserved> rates =
         messages.stream().map(m -> json.readValue(m, ReferenceRateObserved.class)).toList();
     store.saveRates(rates);
+    meters.counter("pretium.catalog.rates.stored").increment(rates.size());
     Set<LocalDate> dates = new TreeSet<>();
     rates.forEach(r -> dates.add(r.rateDate()));
     reconciliation.touched(dates);
@@ -57,6 +69,8 @@ public class Listeners {
     List<ProviderQuoteObserved> quotes =
         messages.stream().map(m -> json.readValue(m, ProviderQuoteObserved.class)).toList();
     int quarantined = store.saveQuotes(quotes);
+    meters.counter("pretium.catalog.quotes.stored").increment(quotes.size());
+    meters.counter("pretium.catalog.prices.quarantined").increment(quarantined);
     if (quarantined > 0) {
       log.info("batch of {} quotes: {} prices quarantined", quotes.size(), quarantined);
     }

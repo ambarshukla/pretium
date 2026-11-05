@@ -1,5 +1,7 @@
 package io.pretium.collector.run;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.pretium.collector.extract.ExtractionException;
 import io.pretium.collector.extract.Extractor;
 import io.pretium.collector.fetch.FetchResult;
@@ -44,6 +46,7 @@ public class CollectionService {
   private final KafkaTemplate<String, String> kafka;
   private final JsonMapper json;
   private final Clock clock;
+  private final MeterRegistry meters;
   private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
   public CollectionService(
@@ -51,7 +54,9 @@ public class CollectionService {
       RawStore raw,
       List<Extractor> extractors,
       KafkaTemplate<String, String> kafka,
-      JsonMapper json) {
+      JsonMapper json,
+      MeterRegistry meters) {
+    this.meters = meters;
     this.fetcher = fetcher;
     this.raw = raw;
     extractors.forEach(e -> this.extractors.put(e.format(), e));
@@ -74,6 +79,7 @@ public class CollectionService {
       CollectionRun run = attempt(spec, force);
       kafka.send(Topics.COLLECTION_RUNS, spec.id(), json.writeValueAsString(run));
       kafka.flush();
+      record(spec, run);
       log.info(
           "{}: {} (http {}, {} bytes, {} observations){}",
           spec.id(),
@@ -86,6 +92,23 @@ public class CollectionService {
     } finally {
       lock.unlock();
     }
+  }
+
+  /**
+   * Counts the run by outcome, adds what it extracted, and times it. The tag values are small fixed
+   * sets (four sources, eight statuses), so the number of time series stays bounded.
+   */
+  private void record(SourceSpec spec, CollectionRun run) {
+    meters
+        .counter("pretium.collection.runs", "source", spec.id(), "status", run.status().name())
+        .increment();
+    meters
+        .counter("pretium.collection.observations", "source", spec.id())
+        .increment(run.extracted());
+    Timer.builder("pretium.collection.duration")
+        .tag("source", spec.id())
+        .register(meters)
+        .record(java.time.Duration.between(run.startedAt(), run.finishedAt()));
   }
 
   private CollectionRun attempt(SourceSpec spec, boolean force) {

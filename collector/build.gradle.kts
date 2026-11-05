@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":events"))
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.springframework.boot:spring-boot-starter-kafka")
     implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
     implementation(libs.jsoup)

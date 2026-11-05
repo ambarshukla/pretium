@@ -119,3 +119,28 @@ the model was needed only at those two points. Since 2021 the page has not chang
 Not yet shown: a model that proposes a wrong selector (none did, so the path that blocks
 bad numbers is still untested on real data), and breakage in the future, which can only be
 observed live.
+
+## 2026-11-05 · Nothing is published until an extraction has finished
+
+**Problem.** An extractor streams what it reads straight to Kafka. If a page failed on row 80
+of 100, rows 1 to 79 had already gone out, so a half-read page looked like a whole one.
+
+**Change.** Observations now wait in a temporary file (a file rather than memory, because the
+remittance dataset is several hundred thousand records) and are sent only after the extractor
+has read the whole file without error. A failed extraction publishes nothing and the run is
+reported as `EXTRACTION_FAILED`. Test: five rows of the real ECB file are read, the extractor
+then fails, and the held rows are discarded together with their file.
+
+**Also.** The verifier now has a test with recipes a model could plausibly propose against the
+real page (a real date that is not the rates date, half of the rows, names where codes belong).
+All are rejected, and none can reach publication.
+
+## 2026-11-05 · Metrics
+
+Both services expose `/actuator/prometheus` (Micrometer). Collector: runs by source and
+status, observations extracted, run duration. Catalog: runs, rates and quotes stored,
+quarantined prices, and per source the age of the last good collection against its freshness
+target (refreshed once a minute, so a dashboard cannot load the database). `infra/` has
+Prometheus and Grafana behind a compose profile (`docker compose --profile metrics up -d`)
+with a provisioned dashboard; they are not deployed to the 4 GB host, which has no room for
+them. The catalog integration test asserts the counters.

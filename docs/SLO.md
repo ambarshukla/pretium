@@ -63,5 +63,8 @@ are ordered the same way.
 
 ## Not yet measured
 
-Availability and latency need request metrics (Micrometer → Prometheus → Grafana). Until
-then, objectives 1 to 3 are checked from the database and the Operations page.
+Availability and latency need request metrics. The services now expose Micrometer metrics
+(`/actuator/prometheus`) and `infra/` has a local Prometheus and Grafana, but nothing scrapes
+the hosted stack, so objectives 1 to 3 are still checked from the database and the Operations
+page. Freshness is already exported per source (`pretium_source_age_seconds` against
+`pretium_source_freshness_target_seconds`).

@@ -45,6 +45,34 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  # Metrics, off by default: start with `docker compose --profile metrics up -d`.
+  # Both services run from Gradle on the host, so Prometheus reaches them at
+  # host.docker.internal. Grafana is at http://localhost:3001 (anonymous viewer).
+  prometheus:
+    profiles: [metrics]
+    image: prom/prometheus:v3.5.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    mem_limit: 256m
+
+  grafana:
+    profiles: [metrics]
+    image: grafana/grafana:12.2.0
+    ports:
+      - "3001:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
+    mem_limit: 384m
+
 volumes:
   postgres-data:
   kafka-data:

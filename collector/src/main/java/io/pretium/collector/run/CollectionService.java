@@ -99,8 +99,22 @@ public class CollectionService {
   }
 
   /**
+   * Creates a source's meters at zero before its first run. Prometheus computes "how many in the
+   * last hour" as the difference between two samples; a counter that first appears already at 1 has
+   * no earlier sample, so that first run would be invisible. With weekly sources and a restart on
+   * every deploy, that would be most runs.
+   */
+  public void registerMeters(SourceSpec spec) {
+    for (Status status : Status.values()) {
+      meters.counter("pretium.collection.runs", "source", spec.id(), "status", status.name());
+    }
+    meters.counter("pretium.collection.observations", "source", spec.id());
+    Timer.builder("pretium.collection.duration").tag("source", spec.id()).register(meters);
+  }
+
+  /**
    * Counts the run by outcome, adds what it extracted, and times it. The tag values are small fixed
-   * sets (four sources, eight statuses), so the number of time series stays bounded.
+   * sets (four sources, five statuses), so the number of time series stays bounded.
    */
   private void record(SourceSpec spec, CollectionRun run) {
     meters

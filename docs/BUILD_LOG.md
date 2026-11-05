@@ -177,3 +177,22 @@ Guard rails: only an https address on the same host as the configured file is ac
 any problem (the catalogue rate-limited us several times on the day this was built) falls
 back to the configured URL with a warning, so a failed lookup never stops a collection.
 Tested against a real catalogue response.
+
+## 2026-11-05 · Metrics checked against a real run, two flaws fixed
+
+The local stack (Kafka, Postgres, both services, Prometheus, Grafana) was run against the
+real sources: three runs, all `SUCCEEDED`, including the World Bank file (204,469 quotes,
+about 80 s, read through the new holding file). Every dashboard query was then evaluated.
+
+- **First runs were invisible.** A counter is created on its first increment, so Prometheus
+  first sees it already at 1, with no earlier sample to subtract from, and `increase()` reads
+  0. With weekly sources and a restart on every deploy, that would hide most runs. Every
+  source's counters are now created at zero at startup (checked: all present at 0 before any
+  run).
+- **The quarantine rate mixed units.** It divided quarantined *prices* (one per quote and
+  amount tier) by stored *quotes*, overstating the rate about twofold. A `prices.stored`
+  counter now gives the right denominator: 0.056%, which matches the database (230 of
+  407,851 prices).
+
+The duration panel now averages over a day, since an hourly window is empty for sources that
+run daily or weekly.

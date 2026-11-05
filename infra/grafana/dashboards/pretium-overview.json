@@ -151,9 +151,9 @@
     },
     {
       "id": 5,
-      "title": "Run duration (seconds, average)",
+      "title": "Run duration (seconds, average over the last day)",
       "type": "timeseries",
-      "description": "",
+      "description": "Daily window: most sources run once a day or once a week, so an hourly average would usually be empty.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -167,7 +167,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (source) (rate(pretium_collection_duration_seconds_sum[1h])) / sum by (source) (rate(pretium_collection_duration_seconds_count[1h]))",
+          "expr": "sum by (source) (increase(pretium_collection_duration_seconds_sum[1d])) / sum by (source) (increase(pretium_collection_duration_seconds_count[1d]))",
           "legendFormat": "{{source}}",
           "datasource": {
             "type": "prometheus",
@@ -186,7 +186,7 @@
       "id": 6,
       "title": "Quarantine rate",
       "type": "timeseries",
-      "description": "Share of stored provider quotes whose price failed a check (per day). Quotes are loaded weekly, so this is usually flat.",
+      "description": "Share of stored prices (one per quote and amount tier) that failed a check, per day. Quotes are loaded weekly, so this is usually flat.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -200,8 +200,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "increase(pretium_catalog_prices_quarantined_total[1d]) / clamp_min(increase(pretium_catalog_quotes_stored_total[1d]), 1)",
-          "legendFormat": "quarantined / quotes stored",
+          "expr": "increase(pretium_catalog_prices_quarantined_total[1d]) / clamp_min(increase(pretium_catalog_prices_stored_total[1d]), 1)",
+          "legendFormat": "quarantined / prices stored",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"

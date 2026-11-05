@@ -1,5 +1,7 @@
 package io.pretium.collector.run;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.pretium.collector.extract.ExtractionException;
 import io.pretium.collector.extract.Extractor;
 import io.pretium.collector.fetch.FetchResult;
@@ -30,7 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * <p>Whatever happens, exactly one {@link CollectionRun} is published at the end. It goes out after
  * the observations it describes, so a consumer that has seen the run has also been sent everything
- * the run produced.
+ * the run produced. A run that fails during extraction publishes no observations at all.
  */
 @Service
 public class CollectionService {
@@ -44,6 +46,7 @@ public class CollectionService {
   private final KafkaTemplate<String, String> kafka;
   private final JsonMapper json;
   private final Clock clock;
+  private final MeterRegistry meters;
   private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
   public CollectionService(
@@ -51,7 +54,9 @@ public class CollectionService {
       RawStore raw,
       List<Extractor> extractors,
       KafkaTemplate<String, String> kafka,
-      JsonMapper json) {
+      JsonMapper json,
+      MeterRegistry meters) {
+    this.meters = meters;
     this.fetcher = fetcher;
     this.raw = raw;
     extractors.forEach(e -> this.extractors.put(e.format(), e));
@@ -74,6 +79,7 @@ public class CollectionService {
       CollectionRun run = attempt(spec, force);
       kafka.send(Topics.COLLECTION_RUNS, spec.id(), json.writeValueAsString(run));
       kafka.flush();
+      record(spec, run);
       log.info(
           "{}: {} (http {}, {} bytes, {} observations){}",
           spec.id(),
@@ -86,6 +92,23 @@ public class CollectionService {
     } finally {
       lock.unlock();
     }
+  }
+
+  /**
+   * Counts the run by outcome, adds what it extracted, and times it. The tag values are small fixed
+   * sets (four sources, eight statuses), so the number of time series stays bounded.
+   */
+  private void record(SourceSpec spec, CollectionRun run) {
+    meters
+        .counter("pretium.collection.runs", "source", spec.id(), "status", run.status().name())
+        .increment();
+    meters
+        .counter("pretium.collection.observations", "source", spec.id())
+        .increment(run.extracted());
+    Timer.builder("pretium.collection.duration")
+        .tag("source", spec.id())
+        .register(meters)
+        .record(java.time.Duration.between(run.startedAt(), run.finishedAt()));
   }
 
   private CollectionRun attempt(SourceSpec spec, boolean force) {
@@ -188,14 +211,33 @@ public class CollectionService {
       log.warn("{}: extraction marker unreadable, extracting again: {}", spec.id(), e.toString());
     }
 
+    // Nothing reaches Kafka until the extractor has read the whole file without error: a page that
+    // fails on row 80 must not publish rows 1 to 79 as if they were the page.
     KafkaObservationSink sink = new KafkaObservationSink(kafka, json);
-    try {
-      int count =
-          extractor.extract(
-              spec,
-              raw.pathOf(spec.id(), evidence),
-              new Extractor.Context(runId, evidence.sha256()),
-              sink);
+    try (SpoolingObservationSink spool = new SpoolingObservationSink(json)) {
+      int count;
+      try {
+        count =
+            extractor.extract(
+                spec,
+                raw.pathOf(spec.id(), evidence),
+                new Extractor.Context(runId, evidence.sha256()),
+                spool);
+      } catch (ExtractionException e) {
+        log.warn("{}: extraction failed, discarding {} held observations", spec.id(), spool.held());
+        return run(
+            runId,
+            spec,
+            url,
+            started,
+            Status.EXTRACTION_FAILED,
+            fetched.httpStatus(),
+            evidence.bytes(),
+            evidence.sha256(),
+            0,
+            e.getMessage());
+      }
+      spool.replay(sink::send);
       String sendError = sink.finish();
       if (sendError != null) {
         return run(
@@ -222,20 +264,8 @@ public class CollectionService {
           evidence.sha256(),
           count,
           null);
-    } catch (ExtractionException e) {
-      sink.finish();
-      return run(
-          runId,
-          spec,
-          url,
-          started,
-          Status.EXTRACTION_FAILED,
-          fetched.httpStatus(),
-          evidence.bytes(),
-          evidence.sha256(),
-          0,
-          e.getMessage());
     } catch (IOException e) {
+      sink.finish();
       return run(
           runId,
           spec,

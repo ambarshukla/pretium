@@ -94,4 +94,37 @@ class RecipeVerifierTest {
     assertThat(v.date()).isEqualTo(LocalDate.of(2017, 1, 26));
     assertThat(v.matched()).isEqualTo(31);
   }
+
+  /**
+   * Recipes a model could plausibly propose that read <em>something</em> from the real page but not
+   * the rates. None may be accepted, whatever they read: this is the path that protects published
+   * numbers when the model is wrong.
+   */
+  @Test
+  void plausibleButWrongRecipesAreNeverAccepted() throws Exception {
+    Path page = fixture("ecb-reference-2026-11-03.html");
+
+    // A real date on the page, but not the date of the rates (a news image caption).
+    Map<String, String> otherDate = new HashMap<>(RECIPE);
+    otherDate.put("dateSelector", "div.image-date");
+    RecipeVerifier.Verdict date = verifier().verify(page, new SourceSpec.Recipe(2, otherDate));
+    assertThat(date.accepted()).isFalse();
+    assertThat(date.date()).isEqualTo(LocalDate.of(2026, 10, 29));
+    assertThat(date.error()).contains("no reference rates for 2026-10-29");
+
+    // Only every other row: well formed, all values right, but half the currencies are missing.
+    Map<String, String> halfTheRows = new HashMap<>(RECIPE);
+    halfTheRows.put("rowSelector", "table.forextable tbody tr:nth-child(odd)");
+    RecipeVerifier.Verdict half = verifier().verify(page, new SourceSpec.Recipe(2, halfTheRows));
+    assertThat(half.accepted()).isFalse();
+    assertThat(half.wrong()).isEmpty();
+    assertThat(half.error()).contains("currencies");
+
+    // The currency's name where its code should be.
+    Map<String, String> names = new HashMap<>(RECIPE);
+    names.put("currencySelector", "td.alignLeft");
+    RecipeVerifier.Verdict name = verifier().verify(page, new SourceSpec.Recipe(2, names));
+    assertThat(name.accepted()).isFalse();
+    assertThat(name.error()).contains("not a currency code");
+  }
 }

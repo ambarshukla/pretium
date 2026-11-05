@@ -127,4 +127,31 @@ class RecipeVerifierTest {
     assertThat(name.accepted()).isFalse();
     assertThat(name.error()).contains("not a currency code");
   }
+
+  /**
+   * The silent failure the verifier exists for, on real data. A recipe that takes its date from the
+   * news caption ("29 October 2026") instead of the rates heading reads every rate on the page
+   * correctly, and labels them all with the wrong day. Each number is real and well formed; nothing
+   * looks broken. Against the ECB's real rates for 29 October they are wrong, and the recipe is
+   * rejected with every wrong value listed: these are the numbers an unverified repair would have
+   * published.
+   */
+  @Test
+  void aRecipeThatReadsTheWrongDayIsCaughtWithItsWrongNumbers() throws Exception {
+    RecipeVerifier verifier =
+        new RecipeVerifier(ReferenceTruth.fromSdmxCsv(fixture("ecb-sdmx-2026-10-29.csv")));
+    Map<String, String> captionDate = new HashMap<>(RECIPE);
+    captionDate.put("dateSelector", "div.image-date");
+
+    RecipeVerifier.Verdict v =
+        verifier.verify(
+            fixture("ecb-reference-2026-11-03.html"), new SourceSpec.Recipe(2, captionDate));
+
+    assertThat(v.accepted()).isFalse();
+    assertThat(v.date()).isEqualTo(LocalDate.of(2026, 10, 29));
+    assertThat(v.read()).isEqualTo(29);
+    assertThat(v.wrongCount()).isEqualTo(29); // every single rate, e.g. USD 1.1179 against 1.113
+    assertThat(v.wrong()).anyMatch(w -> w.startsWith("USD=1.1179 (reference "));
+    assertThat(v.error()).endsWith("values differ from the reference");
+  }
 }

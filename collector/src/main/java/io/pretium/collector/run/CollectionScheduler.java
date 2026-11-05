@@ -45,6 +45,7 @@ public class CollectionScheduler {
   @EventListener(ApplicationReadyEvent.class)
   public void start() {
     for (SourceSpec spec : catalog.all()) {
+      service.registerMeters(spec);
       ZoneId zone = ZoneId.of(spec.zone() == null ? "UTC" : spec.zone());
       CronTrigger trigger = new CronTrigger(spec.cron(), zone);
       scheduler.schedule(() -> submit(spec), trigger);

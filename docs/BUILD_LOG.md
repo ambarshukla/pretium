@@ -144,3 +144,55 @@ target (refreshed once a minute, so a dashboard cannot load the database). `infr
 Prometheus and Grafana behind a compose profile (`docker compose --profile metrics up -d`)
 with a provisioned dashboard; they are not deployed to the 4 GB host, which has no room for
 them. The catalog integration test asserts the counters.
+
+## 2026-11-05 · The wrong-numbers path, on real data
+
+**Gap.** Earlier entries noted that no model had proposed a selector that read wrong numbers,
+so the path that blocks them had never been seen working on real data.
+
+**Shown.** The 3 November page also carries the date "29 October 2026" in a news caption. A
+recipe that takes its date from there reads all 29 rates correctly and labels them with the
+wrong day: real, well-formed numbers, nothing visibly broken. Checked against the ECB's real
+rates for 29 October, **29 of 29 differ** (USD 1.1179 against 1.113), and the recipe is
+rejected with each wrong value listed. This is the failure a repair without an answer key
+would publish silently.
+
+**Also fixed.** An extractor that threw an unchecked exception (jsoup does, for a malformed
+selector) escaped the run without any report, so the failure never reached the operations
+page. It is now an `EXTRACTION_FAILED` run like any other. A new service-level test runs the
+whole collection path (raw store, extractor, holding file, run report, metrics) with only the
+network and Kafka replaced.
+
+## 2026-11-05 · Following the remittance file to its next address
+
+**Problem.** The World Bank's remittance file is published at a new address each quarter,
+with a new resource id in the path, so the next address cannot be guessed. The old address
+keeps answering. A fixed URL would therefore go on reading the old file with every run
+"succeeding", and the freshness check (age of the last good run) would never notice.
+
+**Change.** A source can now name a catalogue entry to consult before each run. For
+`wb-rpw` that is the World Bank's data catalogue API, which lists the dataset's files by
+name; the collector takes the one named *Remittance Prices Worldwide (Complete Dataset)*.
+Guard rails: only an https address on the same host as the configured file is accepted, and
+any problem (the catalogue rate-limited us several times on the day this was built) falls
+back to the configured URL with a warning, so a failed lookup never stops a collection.
+Tested against a real catalogue response.
+
+## 2026-11-05 · Metrics checked against a real run, two flaws fixed
+
+The local stack (Kafka, Postgres, both services, Prometheus, Grafana) was run against the
+real sources: three runs, all `SUCCEEDED`, including the World Bank file (204,469 quotes,
+about 80 s, read through the new holding file). Every dashboard query was then evaluated.
+
+- **First runs were invisible.** A counter is created on its first increment, so Prometheus
+  first sees it already at 1, with no earlier sample to subtract from, and `increase()` reads
+  0. With weekly sources and a restart on every deploy, that would hide most runs. Every
+  source's counters are now created at zero at startup (checked: all present at 0 before any
+  run).
+- **The quarantine rate mixed units.** It divided quarantined *prices* (one per quote and
+  amount tier) by stored *quotes*, overstating the rate about twofold. A `prices.stored`
+  counter now gives the right denominator: 0.056%, which matches the database (230 of
+  407,851 prices).
+
+The duration panel now averages over a day, since an hourly window is empty for sources that
+run daily or weekly.

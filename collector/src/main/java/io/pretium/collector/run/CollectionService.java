@@ -13,6 +13,7 @@ import io.pretium.events.CollectionRun.Status;
 import io.pretium.events.Topics;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.List;
@@ -47,6 +48,7 @@ public class CollectionService {
   private final JsonMapper json;
   private final Clock clock;
   private final MeterRegistry meters;
+  private final UrlDiscovery discovery;
   private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
   public CollectionService(
@@ -55,8 +57,10 @@ public class CollectionService {
       List<Extractor> extractors,
       KafkaTemplate<String, String> kafka,
       JsonMapper json,
-      MeterRegistry meters) {
+      MeterRegistry meters,
+      UrlDiscovery discovery) {
     this.meters = meters;
+    this.discovery = discovery;
     this.fetcher = fetcher;
     this.raw = raw;
     extractors.forEach(e -> this.extractors.put(e.format(), e));
@@ -95,8 +99,22 @@ public class CollectionService {
   }
 
   /**
+   * Creates a source's meters at zero before its first run. Prometheus computes "how many in the
+   * last hour" as the difference between two samples; a counter that first appears already at 1 has
+   * no earlier sample, so that first run would be invisible. With weekly sources and a restart on
+   * every deploy, that would be most runs.
+   */
+  public void registerMeters(SourceSpec spec) {
+    for (Status status : Status.values()) {
+      meters.counter("pretium.collection.runs", "source", spec.id(), "status", status.name());
+    }
+    meters.counter("pretium.collection.observations", "source", spec.id());
+    Timer.builder("pretium.collection.duration").tag("source", spec.id()).register(meters);
+  }
+
+  /**
    * Counts the run by outcome, adds what it extracted, and times it. The tag values are small fixed
-   * sets (four sources, eight statuses), so the number of time series stays bounded.
+   * sets (four sources, five statuses), so the number of time series stays bounded.
    */
   private void record(SourceSpec spec, CollectionRun run) {
     meters
@@ -108,7 +126,7 @@ public class CollectionService {
     Timer.builder("pretium.collection.duration")
         .tag("source", spec.id())
         .register(meters)
-        .record(java.time.Duration.between(run.startedAt(), run.finishedAt()));
+        .record(Duration.between(run.startedAt(), run.finishedAt()));
   }
 
   private CollectionRun attempt(SourceSpec spec, boolean force) {
@@ -133,7 +151,10 @@ public class CollectionService {
     }
 
     // The first ever run of a source with a history endpoint fetches the history.
-    String url = previous.isEmpty() && spec.backfillUrl() != null ? spec.backfillUrl() : spec.url();
+    String url =
+        previous.isEmpty() && spec.backfillUrl() != null
+            ? spec.backfillUrl()
+            : discovery.urlFor(spec);
     Optional<String> etag = force ? Optional.empty() : previous.map(RawStore.Entry::etag);
     FetchResult fetched = fetcher.fetch(url, etag);
 
@@ -223,7 +244,9 @@ public class CollectionService {
                 raw.pathOf(spec.id(), evidence),
                 new Extractor.Context(runId, evidence.sha256()),
                 spool);
-      } catch (ExtractionException e) {
+      } catch (ExtractionException | RuntimeException e) {
+        // RuntimeException too: a malformed selector in a recipe makes jsoup throw an unchecked
+        // exception, and that must still end as a reported failed run, not a missing one.
         log.warn("{}: extraction failed, discarding {} held observations", spec.id(), spool.held());
         return run(
             runId,
@@ -235,7 +258,7 @@ public class CollectionService {
             evidence.bytes(),
             evidence.sha256(),
             0,
-            e.getMessage());
+            e instanceof ExtractionException ? e.getMessage() : "unexpected error: " + e);
       }
       spool.replay(sink::send);
       String sendError = sink.finish();

@@ -1,6 +1,7 @@
 package io.pretium.catalog.ingest;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.pretium.catalog.api.FreshnessProperties;
 import io.pretium.catalog.reconcile.SettledReconciliation;
 import io.pretium.catalog.store.CatalogStore;
 import io.pretium.events.CollectionRun;
@@ -36,8 +37,24 @@ public class Listeners {
       CatalogStore store,
       SettledReconciliation reconciliation,
       JsonMapper json,
-      MeterRegistry meters) {
+      MeterRegistry meters,
+      FreshnessProperties sources) {
     this.meters = meters;
+    // Created at zero, so that Prometheus sees the first increment after a restart (it computes
+    // increases between two samples, and a counter that first appears at 1 has no earlier one).
+    for (String name :
+        List.of(
+            "pretium.catalog.rates.stored",
+            "pretium.catalog.quotes.stored",
+            "pretium.catalog.prices.stored",
+            "pretium.catalog.prices.quarantined")) {
+      meters.counter(name);
+    }
+    for (String source : sources.freshness().keySet()) {
+      for (CollectionRun.Status status : CollectionRun.Status.values()) {
+        meters.counter("pretium.catalog.runs.stored", "source", source, "status", status.name());
+      }
+    }
     this.store = store;
     this.reconciliation = reconciliation;
     this.json = json;
@@ -70,6 +87,11 @@ public class Listeners {
         messages.stream().map(m -> json.readValue(m, ProviderQuoteObserved.class)).toList();
     int quarantined = store.saveQuotes(quotes);
     meters.counter("pretium.catalog.quotes.stored").increment(quotes.size());
+    // A quote carries one price per amount tier (200 and 500 USD), and checks judge each price, so
+    // the quarantine rate is quarantined prices over stored prices, not over quotes.
+    meters
+        .counter("pretium.catalog.prices.stored")
+        .increment(quotes.stream().mapToInt(q -> q.tiers().size()).sum());
     meters.counter("pretium.catalog.prices.quarantined").increment(quarantined);
     if (quarantined > 0) {
       log.info("batch of {} quotes: {} prices quarantined", quotes.size(), quarantined);

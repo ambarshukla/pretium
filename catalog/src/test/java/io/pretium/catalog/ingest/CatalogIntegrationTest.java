@@ -145,6 +145,7 @@ class CatalogIntegrationTest {
     // The metrics a dashboard reads: two quotes stored, one of them quarantined; the four rates
     // plus the redelivered one counted as received.
     assertThat(meters.get("pretium.catalog.quotes.stored").counter().count()).isEqualTo(2.0);
+    assertThat(meters.get("pretium.catalog.prices.stored").counter().count()).isEqualTo(2.0);
     assertThat(meters.get("pretium.catalog.prices.quarantined").counter().count()).isEqualTo(1.0);
     assertThat(meters.get("pretium.catalog.rates.stored").counter().count()).isEqualTo(5.0);
   }

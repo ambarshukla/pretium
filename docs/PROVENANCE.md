@@ -13,7 +13,11 @@ verbatim excerpts used under the same terms.
   rate applied, interbank rate, FX margin and total cost, provider by provider. The
   "complete dataset" workbook, sheet *Dataset (from Q2 2016)*.
 - **Where:** <https://datacatalog.worldbank.org/search/dataset/0037898/remittance-prices-worldwide>,
-  file `rpw_dataset_2011_2025_q3.xlsx` on `datacatalogfiles.worldbank.org`.
+  file `rpw_dataset_2011_2025_q3.xlsx` on `datacatalogfiles.worldbank.org`. Each quarter's
+  file has a new address, so before each run the collector asks the World Bank's data
+  catalogue API (`ddh-openapi.worldbank.org/datasets/0037898`) which file is current, and
+  falls back to the address above if the catalogue does not answer. That host has no
+  robots.txt (404), which RFC 9309 reads as no restrictions.
 - **Licence:** Creative Commons Attribution 4.0, under the World Bank's Terms of Use for
   Datasets.
 - **Required attribution** (shown on every page of the site): *"The World Bank, Remittance
@@ -59,3 +63,11 @@ real rows from the Q2 2016 survey, copied into the test code with their record i
 
 One navigation-menu link (to the ECB press section) was removed from the 3 November 2026 page;
 the rates table and everything the extractor reads are untouched.
+
+`ecb-sdmx-2026-10-29.csv` holds the 29 rows for 29 October 2026, copied verbatim from the
+SDMX history file collected on 4 November 2026 (Source: ECB). It is the answer key for a test
+in which a recipe reads the 3 November page but takes its date from a news caption on it.
+
+`wb-ddh-dataset-0037898.json` is an excerpt of the World Bank data catalogue's entry for the
+dataset, captured on 5 November 2026: the identifying fields and the `resources` list,
+verbatim (the description, keywords and contact fields are left out).

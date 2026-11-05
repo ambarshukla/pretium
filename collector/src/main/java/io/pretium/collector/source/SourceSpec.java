@@ -17,6 +17,8 @@ import java.util.Map;
  * @param cron when to collect, as a Spring cron expression (second minute hour day month weekday)
  * @param zone the time zone the cron expression is written in
  * @param recipe extractor settings: selectors for HTML, sheet name for spreadsheets
+ * @param discovery where to look up the current URL before each run, or null if {@code url} is
+ *     fixed
  */
 public record SourceSpec(
     String id,
@@ -29,7 +31,35 @@ public record SourceSpec(
     Format format,
     String cron,
     String zone,
-    Recipe recipe) {
+    Recipe recipe,
+    Discovery discovery) {
+
+  /** A source whose URL never changes. */
+  public SourceSpec(
+      String id,
+      String name,
+      String publisher,
+      String licence,
+      String homepage,
+      String url,
+      String backfillUrl,
+      Format format,
+      String cron,
+      String zone,
+      Recipe recipe) {
+    this(
+        id, name, publisher, licence, homepage, url, backfillUrl, format, cron, zone, recipe, null);
+  }
+
+  /**
+   * For a publisher that puts each new edition at a new address: a catalogue entry that names the
+   * current one. {@code url} stays as the fallback when the catalogue cannot be read.
+   *
+   * @param catalogUrl a JSON document with a {@code resources} list of {@code name}/{@code url}
+   *     pairs (the World Bank data catalogue's format)
+   * @param resourceName the {@code name} of the resource to fetch
+   */
+  public record Discovery(String catalogUrl, String resourceName) {}
 
   /** The response formats the collector can read. Each has one extractor. */
   public enum Format {

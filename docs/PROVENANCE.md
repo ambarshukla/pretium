@@ -59,3 +59,7 @@ real rows from the Q2 2016 survey, copied into the test code with their record i
 
 One navigation-menu link (to the ECB press section) was removed from the 3 November 2026 page;
 the rates table and everything the extractor reads are untouched.
+
+`ecb-sdmx-2026-10-29.csv` holds the 29 rows for 29 October 2026, copied verbatim from the
+SDMX history file collected on 4 November 2026 (Source: ECB). It is the answer key for a test
+in which a recipe reads the 3 November page but takes its date from a news caption on it.

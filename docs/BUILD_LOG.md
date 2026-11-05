@@ -144,3 +144,21 @@ target (refreshed once a minute, so a dashboard cannot load the database). `infr
 Prometheus and Grafana behind a compose profile (`docker compose --profile metrics up -d`)
 with a provisioned dashboard; they are not deployed to the 4 GB host, which has no room for
 them. The catalog integration test asserts the counters.
+
+## 2026-11-05 · The wrong-numbers path, on real data
+
+**Gap.** Earlier entries noted that no model had proposed a selector that read wrong numbers,
+so the path that blocks them had never been seen working on real data.
+
+**Shown.** The 3 November page also carries the date "29 October 2026" in a news caption. A
+recipe that takes its date from there reads all 29 rates correctly and labels them with the
+wrong day: real, well-formed numbers, nothing visibly broken. Checked against the ECB's real
+rates for 29 October, **29 of 29 differ** (USD 1.1179 against 1.113), and the recipe is
+rejected with each wrong value listed. This is the failure a repair without an answer key
+would publish silently.
+
+**Also fixed.** An extractor that threw an unchecked exception (jsoup does, for a malformed
+selector) escaped the run without any report, so the failure never reached the operations
+page. It is now an `EXTRACTION_FAILED` run like any other. A new service-level test runs the
+whole collection path (raw store, extractor, holding file, run report, metrics) with only the
+network and Kafka replaced.

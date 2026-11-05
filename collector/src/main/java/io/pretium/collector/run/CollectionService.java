@@ -13,6 +13,7 @@ import io.pretium.events.CollectionRun.Status;
 import io.pretium.events.Topics;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.List;
@@ -108,7 +109,7 @@ public class CollectionService {
     Timer.builder("pretium.collection.duration")
         .tag("source", spec.id())
         .register(meters)
-        .record(java.time.Duration.between(run.startedAt(), run.finishedAt()));
+        .record(Duration.between(run.startedAt(), run.finishedAt()));
   }
 
   private CollectionRun attempt(SourceSpec spec, boolean force) {
@@ -223,7 +224,9 @@ public class CollectionService {
                 raw.pathOf(spec.id(), evidence),
                 new Extractor.Context(runId, evidence.sha256()),
                 spool);
-      } catch (ExtractionException e) {
+      } catch (ExtractionException | RuntimeException e) {
+        // RuntimeException too: a malformed selector in a recipe makes jsoup throw an unchecked
+        // exception, and that must still end as a reported failed run, not a missing one.
         log.warn("{}: extraction failed, discarding {} held observations", spec.id(), spool.held());
         return run(
             runId,
@@ -235,7 +238,7 @@ public class CollectionService {
             evidence.bytes(),
             evidence.sha256(),
             0,
-            e.getMessage());
+            e instanceof ExtractionException ? e.getMessage() : "unexpected error: " + e);
       }
       spool.replay(sink::send);
       String sendError = sink.finish();

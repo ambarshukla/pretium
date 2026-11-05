@@ -62,17 +62,45 @@ type Break = {
 
 type LatestRate = { currency: string; date: string; sdmx: number | null; xml: number | null; html: number | null };
 
+type Payout = "LOCAL" | "SEND_CURRENCY" | "USD" | "EUR" | "INVERTED" | "UNEXPLAINED" | "NO_REFERENCE";
+
+type Benchmark = {
+  period: string;
+  reference: string;
+  tolerancePct: number;
+  quotes: number;
+  byPayout: Record<Payout, number>;
+  localMedianAbsDeviationPct: number | null;
+  localWithinHalfPercentPct: number | null;
+  pairs: { pair: string; quotes: number; medianAbsDeviationPct: number; maxAbsDeviationPct: number }[];
+  flagged: {
+    payout: Payout;
+    recordId: string;
+    corridor: string;
+    provider: string;
+    observedOn: string;
+    pair: string;
+    surveyRate: number;
+    ecbRate: number;
+    deviationPct: number;
+  }[];
+};
+
 const when = (s: string | null) => (s ? new Date(s).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "never");
 
 export default async function OpsPage() {
-  const [sources, runs, quality, quarantine, breaks, latest] = await Promise.all([
+  const [sources, runs, quality, quarantine, breaks, latest, benchmark] = await Promise.all([
     apiOrNull<SourceHealth[]>("/api/v1/ops/sources"),
     apiOrNull<Run[]>("/api/v1/ops/runs?limit=20"),
     apiOrNull<Quality>("/api/v1/ops/quality"),
     apiOrNull<Quarantined[]>("/api/v1/ops/quarantine?limit=25"),
     apiOrNull<Break[]>("/api/v1/ops/breaks?limit=50"),
     apiOrNull<LatestRate[]>("/api/v1/rates/latest"),
+    apiOrNull<Benchmark>("/api/v1/ops/benchmark"),
   ]);
+  const b = benchmark?.byPayout;
+  const checked = b ? benchmark!.quotes - b.NO_REFERENCE : 0;
+  const otherCurrency = b ? b.SEND_CURRENCY + b.USD + b.EUR : 0;
 
   const total = (quality?.byStatus ?? []).reduce((a, r) => a + Number(r.prices), 0);
   const count = (s: string) => (quality?.byStatus ?? []).filter((r) => r.status === s).reduce((a, r) => a + Number(r.prices), 0);
@@ -191,6 +219,78 @@ export default async function OpsPage() {
           </tbody>
         </table>
       </div>
+
+      {benchmark && b && (
+        <>
+          <h2>Two publishers, one market rate</h2>
+          <p className="muted small" style={{ marginTop: 0 }}>
+            Every FX margin on this site is measured against the World Bank survey&apos;s own &ldquo;interbank
+            rate&rdquo;. Here that rate is checked against the ECB&apos;s, for {period(benchmark.period)}: {num(checked, 0)}{" "}
+            of {num(benchmark.quotes, 0)} quotes are between currencies the ECB publishes. {num(b.LOCAL, 0)} match
+            the rate into the receiving country&apos;s currency (median gap{" "}
+            {benchmark.localMedianAbsDeviationPct ?? "–"}%, {benchmark.localWithinHalfPercentPct ?? "–"}% within
+            0.5%); {num(otherCurrency, 0)} match a payout in another currency (US dollars {b.USD}, euros {b.EUR},
+            the currency sent {b.SEND_CURRENCY}); {b.INVERTED} are written the wrong way round and{" "}
+            {b.UNEXPLAINED} fit nothing within {benchmark.tolerancePct}%.
+          </p>
+          <div className="panel table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pair</th>
+                  <th className="n">Quotes</th>
+                  <th className="n">Median gap</th>
+                  <th className="n">Largest gap</th>
+                </tr>
+              </thead>
+              <tbody>
+                {benchmark.pairs.slice(0, 10).map((p) => (
+                  <tr key={p.pair}>
+                    <td className="mono">{p.pair}</td>
+                    <td className="n">{p.quotes}</td>
+                    <td className="n">{p.medianAbsDeviationPct}%</td>
+                    <td className="n">{p.maxAbsDeviationPct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {benchmark.flagged.length > 0 && (
+            <div className="panel table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Flag</th>
+                    <th>Corridor</th>
+                    <th>Provider</th>
+                    <th>Observed</th>
+                    <th className="n">Survey</th>
+                    <th className="n">ECB</th>
+                    <th className="n">Gap</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {benchmark.flagged.slice(0, 20).map((f) => (
+                    <tr key={f.recordId}>
+                      <td>
+                        <span className="chip WARN">{f.payout === "INVERTED" ? "wrong way round" : "unexplained"}</span>
+                      </td>
+                      <td className="small">
+                        {f.corridor} <span className="mono">{f.pair}</span>
+                      </td>
+                      <td>{f.provider}</td>
+                      <td className="small">{f.observedOn}</td>
+                      <td className="n">{f.surveyRate}</td>
+                      <td className="n">{f.ecbRate}</td>
+                      <td className="n">{f.deviationPct}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
 
       {(breaks ?? []).length > 0 && (
         <>

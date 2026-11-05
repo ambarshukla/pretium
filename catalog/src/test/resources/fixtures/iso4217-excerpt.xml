@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<excerpt>
+<!-- list-one.xml -->
+<ISO_4217 list="list-one.xml" Pblshd="2026-09-17">
+	<CcyTbl>
+		<CcyNtry>
+			<CtryNm>ALGERIA</CtryNm>
+			<CcyNm>Algerian Dinar</CcyNm>
+			<Ccy>DZD</Ccy>
+			<CcyNbr>012</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>AUSTRALIA</CtryNm>
+			<CcyNm>Australian Dollar</CcyNm>
+			<Ccy>AUD</Ccy>
+			<CcyNbr>036</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>AUSTRIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>BELGIUM</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>Brazilian Real</CcyNm>
+			<Ccy>BRL</Ccy>
+			<CcyNbr>986</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>BULGARIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>CANADA</CtryNm>
+			<CcyNm>Canadian Dollar</CcyNm>
+			<Ccy>CAD</Ccy>
+			<CcyNbr>124</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>CHINA</CtryNm>
+			<CcyNm>Yuan Renminbi</CcyNm>
+			<Ccy>CNY</Ccy>
+			<CcyNbr>156</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>CROATIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>CZECHIA</CtryNm>
+			<CcyNm>Czech Koruna</CcyNm>
+			<Ccy>CZK</Ccy>
+			<CcyNbr>203</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>ECUADOR</CtryNm>
+			<CcyNm>US Dollar</CcyNm>
+			<Ccy>USD</Ccy>
+			<CcyNbr>840</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>ESTONIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>FRANCE</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>GERMANY</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>HUNGARY</CtryNm>
+			<CcyNm>Forint</CcyNm>
+			<Ccy>HUF</Ccy>
+			<CcyNbr>348</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>INDIA</CtryNm>
+			<CcyNm>Indian Rupee</CcyNm>
+			<Ccy>INR</Ccy>
+			<CcyNbr>356</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>INDONESIA</CtryNm>
+			<CcyNm>Rupiah</CcyNm>
+			<Ccy>IDR</Ccy>
+			<CcyNbr>360</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>ISRAEL</CtryNm>
+			<CcyNm>New Israeli Sheqel</CcyNm>
+			<Ccy>ILS</Ccy>
+			<CcyNbr>376</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>ITALY</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>JAPAN</CtryNm>
+			<CcyNm>Yen</CcyNm>
+			<Ccy>JPY</Ccy>
+			<CcyNbr>392</CcyNbr>
+			<CcyMnrUnts>0</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>KOREA (THE REPUBLIC OF)</CtryNm>
+			<CcyNm>Won</CcyNm>
+			<Ccy>KRW</Ccy>
+			<CcyNbr>410</CcyNbr>
+			<CcyMnrUnts>0</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>LATVIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>LITHUANIA</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>MALAYSIA</CtryNm>
+			<CcyNm>Malaysian Ringgit</CcyNm>
+			<Ccy>MYR</Ccy>
+			<CcyNbr>458</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>MEXICO</CtryNm>
+			<CcyNm>Mexican Peso</CcyNm>
+			<Ccy>MXN</Ccy>
+			<CcyNbr>484</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>MEXICO</CtryNm>
+			<CcyNm IsFund="true">Mexican Unidad de Inversion (UDI)</CcyNm>
+			<Ccy>MXV</Ccy>
+			<CcyNbr>979</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>MOROCCO</CtryNm>
+			<CcyNm>Moroccan Dirham</CcyNm>
+			<Ccy>MAD</Ccy>
+			<CcyNbr>504</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>NETHERLANDS (THE)</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>NEW ZEALAND</CtryNm>
+			<CcyNm>New Zealand Dollar</CcyNm>
+			<Ccy>NZD</Ccy>
+			<CcyNbr>554</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>NORWAY</CtryNm>
+			<CcyNm>Norwegian Krone</CcyNm>
+			<Ccy>NOK</Ccy>
+			<CcyNbr>578</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>PHILIPPINES (THE)</CtryNm>
+			<CcyNm>Philippine Peso</CcyNm>
+			<Ccy>PHP</Ccy>
+			<CcyNbr>608</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>POLAND</CtryNm>
+			<CcyNm>Zloty</CcyNm>
+			<Ccy>PLN</Ccy>
+			<CcyNbr>985</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>PORTUGAL</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>ROMANIA</CtryNm>
+			<CcyNm>Romanian Leu</CcyNm>
+			<Ccy>RON</Ccy>
+			<CcyNbr>946</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>RUSSIAN FEDERATION (THE)</CtryNm>
+			<CcyNm>Russian Ruble</CcyNm>
+			<Ccy>RUB</Ccy>
+			<CcyNbr>643</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SINGAPORE</CtryNm>
+			<CcyNm>Singapore Dollar</CcyNm>
+			<Ccy>SGD</Ccy>
+			<CcyNbr>702</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SOUTH AFRICA</CtryNm>
+			<CcyNm>Rand</CcyNm>
+			<Ccy>ZAR</Ccy>
+			<CcyNbr>710</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SPAIN</CtryNm>
+			<CcyNm>Euro</CcyNm>
+			<Ccy>EUR</Ccy>
+			<CcyNbr>978</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SWEDEN</CtryNm>
+			<CcyNm>Swedish Krona</CcyNm>
+			<Ccy>SEK</Ccy>
+			<CcyNbr>752</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SWITZERLAND</CtryNm>
+			<CcyNm>Swiss Franc</CcyNm>
+			<Ccy>CHF</Ccy>
+			<CcyNbr>756</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SWITZERLAND</CtryNm>
+			<CcyNm IsFund="true">WIR Euro</CcyNm>
+			<Ccy>CHE</Ccy>
+			<CcyNbr>947</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>SWITZERLAND</CtryNm>
+			<CcyNm IsFund="true">WIR Franc</CcyNm>
+			<Ccy>CHW</Ccy>
+			<CcyNbr>948</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>THAILAND</CtryNm>
+			<CcyNm>Baht</CcyNm>
+			<Ccy>THB</Ccy>
+			<CcyNbr>764</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>TÜRKİYE</CtryNm>
+			<CcyNm>Turkish Lira</CcyNm>
+			<Ccy>TRY</Ccy>
+			<CcyNbr>949</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND (THE)</CtryNm>
+			<CcyNm>Pound Sterling</CcyNm>
+			<Ccy>GBP</Ccy>
+			<CcyNbr>826</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>UNITED STATES OF AMERICA (THE)</CtryNm>
+			<CcyNm>US Dollar</CcyNm>
+			<Ccy>USD</Ccy>
+			<CcyNbr>840</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+		<CcyNtry>
+			<CtryNm>UNITED STATES OF AMERICA (THE)</CtryNm>
+			<CcyNm IsFund="true">US Dollar (Next day)</CcyNm>
+			<Ccy>USN</Ccy>
+			<CcyNbr>997</CcyNbr>
+			<CcyMnrUnts>2</CcyMnrUnts>
+		</CcyNtry>
+	</CcyTbl>
+</ISO_4217>
+<!-- list-three.xml -->
+<ISO_4217 list="list-three.xml" Pblshd="2026-01-01">
+	<HstrcCcyTbl>
+		<HstrcCcyNtry>
+			<CtryNm>AUSTRIA</CtryNm>
+			<CcyNm>Schilling</CcyNm>
+			<Ccy>ATS</Ccy>
+			<CcyNbr>040</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BELGIUM</CtryNm>
+			<CcyNm>Convertible Franc</CcyNm>
+			<Ccy>BEC</Ccy>
+			<CcyNbr>993</CcyNbr>
+			<WthdrwlDt>1990-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BELGIUM</CtryNm>
+			<CcyNm>Belgian Franc</CcyNm>
+			<Ccy>BEF</Ccy>
+			<CcyNbr>056</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BELGIUM</CtryNm>
+			<CcyNm>Financial Franc</CcyNm>
+			<Ccy>BEL</Ccy>
+			<CcyNbr>992</CcyNbr>
+			<WthdrwlDt>1990-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>Cruzeiro</CcyNm>
+			<Ccy>BRB</Ccy>
+			<CcyNbr>076</CcyNbr>
+			<WthdrwlDt>1986-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>Cruzado</CcyNm>
+			<Ccy>BRC</Ccy>
+			<CcyNbr>076</CcyNbr>
+			<WthdrwlDt>1989-02</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>Cruzeiro</CcyNm>
+			<Ccy>BRE</Ccy>
+			<CcyNbr>076</CcyNbr>
+			<WthdrwlDt>1993-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>New Cruzado</CcyNm>
+			<Ccy>BRN</Ccy>
+			<CcyNbr>076</CcyNbr>
+			<WthdrwlDt>1990-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BRAZIL</CtryNm>
+			<CcyNm>Cruzeiro Real</CcyNm>
+			<Ccy>BRR</Ccy>
+			<CcyNbr>987</CcyNbr>
+			<WthdrwlDt>1994-07</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BULGARIA</CtryNm>
+			<CcyNm>Lev A/52</CcyNm>
+			<Ccy>BGJ</Ccy>
+			<CcyNbr>100</CcyNbr>
+			<WthdrwlDt>1989 to 1990</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BULGARIA</CtryNm>
+			<CcyNm>Lev A/62</CcyNm>
+			<Ccy>BGK</Ccy>
+			<CcyNbr>100</CcyNbr>
+			<WthdrwlDt>1989 to 1990</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BULGARIA</CtryNm>
+			<CcyNm>Lev</CcyNm>
+			<Ccy>BGL</Ccy>
+			<CcyNbr>100</CcyNbr>
+			<WthdrwlDt>2003-11</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>BULGARIA</CtryNm>
+			<CcyNm>Bulgarian Lev</CcyNm>
+			<Ccy>BGN</Ccy>
+			<CcyNbr>975</CcyNbr>
+			<WthdrwlDt>2026-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>CROATIA</CtryNm>
+			<CcyNm>Croatian Dinar</CcyNm>
+			<Ccy>HRD</Ccy>
+			<CcyNbr>191</CcyNbr>
+			<WthdrwlDt>1995-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>CROATIA</CtryNm>
+			<CcyNm>Croatian Kuna</CcyNm>
+			<Ccy>HRK</Ccy>
+			<CcyNbr>191</CcyNbr>
+			<WthdrwlDt>2015-06</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>CROATIA</CtryNm>
+			<CcyNm>Kuna</CcyNm>
+			<Ccy>HRK</Ccy>
+			<CcyNbr>191</CcyNbr>
+			<WthdrwlDt>2023-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ECUADOR</CtryNm>
+			<CcyNm>Sucre</CcyNm>
+			<Ccy>ECS</Ccy>
+			<CcyNbr>218</CcyNbr>
+			<WthdrwlDt>2000-09</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ECUADOR</CtryNm>
+			<CcyNm>Unidad de Valor Constante (UVC)</CcyNm>
+			<Ccy>ECV</Ccy>
+			<CcyNbr>983</CcyNbr>
+			<WthdrwlDt>2000-09</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ESTONIA</CtryNm>
+			<CcyNm>Kroon</CcyNm>
+			<Ccy>EEK</Ccy>
+			<CcyNbr>233</CcyNbr>
+			<WthdrwlDt>2011-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>FRANCE</CtryNm>
+			<CcyNm>French Franc</CcyNm>
+			<Ccy>FRF</Ccy>
+			<CcyNbr>250</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>GERMANY</CtryNm>
+			<CcyNm>Deutsche Mark</CcyNm>
+			<Ccy>DEM</Ccy>
+			<CcyNbr>276</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ISRAEL</CtryNm>
+			<CcyNm>Pound</CcyNm>
+			<Ccy>ILP</Ccy>
+			<CcyNbr>376</CcyNbr>
+			<WthdrwlDt>1978 to 1981</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ISRAEL</CtryNm>
+			<CcyNm>Old Shekel</CcyNm>
+			<Ccy>ILR</Ccy>
+			<CcyNbr>376</CcyNbr>
+			<WthdrwlDt>1989 to 1990</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ITALY</CtryNm>
+			<CcyNm>Italian Lira</CcyNm>
+			<Ccy>ITL</Ccy>
+			<CcyNbr>380</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>LATVIA</CtryNm>
+			<CcyNm>Latvian Lats</CcyNm>
+			<Ccy>LVL</Ccy>
+			<CcyNbr>428</CcyNbr>
+			<WthdrwlDt>2014-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>LATVIA</CtryNm>
+			<CcyNm>Latvian Ruble</CcyNm>
+			<Ccy>LVR</Ccy>
+			<CcyNbr>428</CcyNbr>
+			<WthdrwlDt>1994-12</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>LITHUANIA</CtryNm>
+			<CcyNm>Lithuanian Litas</CcyNm>
+			<Ccy>LTL</Ccy>
+			<CcyNbr>440</CcyNbr>
+			<WthdrwlDt>2014-12</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>LITHUANIA</CtryNm>
+			<CcyNm>Talonas</CcyNm>
+			<Ccy>LTT</Ccy>
+			<CcyNbr>440</CcyNbr>
+			<WthdrwlDt>1993-07</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>MEXICO</CtryNm>
+			<CcyNm>Mexican Peso</CcyNm>
+			<Ccy>MXP</Ccy>
+			<CcyNbr>484</CcyNbr>
+			<WthdrwlDt>1993-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>POLAND</CtryNm>
+			<CcyNm>Zloty</CcyNm>
+			<Ccy>PLZ</Ccy>
+			<CcyNbr>616</CcyNbr>
+			<WthdrwlDt>1997-01</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>PORTUGAL</CtryNm>
+			<CcyNm>Portuguese Escudo</CcyNm>
+			<Ccy>PTE</Ccy>
+			<CcyNbr>620</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ROMANIA</CtryNm>
+			<CcyNm>Leu A/52</CcyNm>
+			<Ccy>ROK</Ccy>
+			<CcyNbr>642</CcyNbr>
+			<WthdrwlDt>1989 to 1990</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ROMANIA</CtryNm>
+			<CcyNm>Old Leu</CcyNm>
+			<Ccy>ROL</Ccy>
+			<CcyNbr>642</CcyNbr>
+			<WthdrwlDt>2005-06</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>ROMANIA</CtryNm>
+			<CcyNm>New Romanian Leu </CcyNm>
+			<Ccy>RON</Ccy>
+			<CcyNbr>946</CcyNbr>
+			<WthdrwlDt>2015-06</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>SOUTH AFRICA</CtryNm>
+			<CcyNm>Financial Rand</CcyNm>
+			<Ccy>ZAL</Ccy>
+			<CcyNbr>991</CcyNbr>
+			<WthdrwlDt>1995-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>SPAIN</CtryNm>
+			<CcyNm>Spanish Peseta</CcyNm>
+			<Ccy>ESA</Ccy>
+			<CcyNbr>996</CcyNbr>
+			<WthdrwlDt>1978 to 1981</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>SPAIN</CtryNm>
+			<CcyNm>"A" Account (convertible Peseta Account)</CcyNm>
+			<Ccy>ESB</Ccy>
+			<CcyNbr>995</CcyNbr>
+			<WthdrwlDt>1994-12</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>SPAIN</CtryNm>
+			<CcyNm>Spanish Peseta</CcyNm>
+			<Ccy>ESP</Ccy>
+			<CcyNbr>724</CcyNbr>
+			<WthdrwlDt>2002-03</WthdrwlDt>
+		</HstrcCcyNtry>
+		<HstrcCcyNtry>
+			<CtryNm>SWITZERLAND</CtryNm>
+			<CcyNm>WIR Franc (for electronic)</CcyNm>
+			<Ccy>CHC</Ccy>
+			<CcyNbr>948</CcyNbr>
+			<WthdrwlDt>2004-11</WthdrwlDt>
+		</HstrcCcyNtry>
+	</HstrcCcyTbl>
+</ISO_4217>
+</excerpt>

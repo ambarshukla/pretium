@@ -101,3 +101,21 @@ holds only 13 of 36 currency rows: the archived copy is truncated, and the verif
 refused to accept a partial read. Not yet shown: pages from 2020 onwards, and a model that
 proposes a wrong selector (none did, so the "blocked wrong numbers" path is still untested
 on real data).
+
+## 2026-11-05 · Selector repair over the full archived history
+
+**Observed.** All 119 archived copies of the rates page (2017 to 2026), replayed newest
+first against the same local model, with every read checked against the official data file:
+
+| | |
+|---|---|
+| Pages read correctly | **118 of 119** (116 by a recipe already known, 2 healed by the model) |
+| Needed a person | 1 (the truncated April 2019 snapshot with 13 of 36 rows) |
+| Model proposals | 4 (2 accepted), about 74 s each |
+| Wrong numbers accepted or published | 0 |
+
+Three recipes cover nine years of the page: the layout changed twice (by December 2020 and again by January 2019), and
+the model was needed only at those two points. Since 2021 the page has not changed.
+Not yet shown: a model that proposes a wrong selector (none did, so the path that blocks
+bad numbers is still untested on real data), and breakage in the future, which can only be
+observed live.

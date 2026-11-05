@@ -38,7 +38,7 @@ final class KafkaObservationSink implements ObservationSink {
     send(Topics.PROVIDER_QUOTES, quote.key(), json.writeValueAsString(quote));
   }
 
-  private void send(String topic, String key, String value) {
+  void send(String topic, String key, String value) {
     kafka
         .send(topic, key, value)
         .whenComplete(

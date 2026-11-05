@@ -20,3 +20,9 @@ recipe:
   version: 1
   settings:
     sheet: Dataset (from Q2 2016)
+# Each quarter's file is published at a new address (with a new resource id),
+# and the old one keeps answering. The data catalogue names the current file,
+# so it is asked before each run; "url" above is the fallback.
+discovery:
+  catalogUrl: https://ddh-openapi.worldbank.org/datasets/0037898
+  resourceName: Remittance Prices Worldwide (Complete Dataset)

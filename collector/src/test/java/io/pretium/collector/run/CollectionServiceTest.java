@@ -91,7 +91,13 @@ class CollectionServiceTest {
 
   CollectionService service(Extractor... extractors) throws Exception {
     return new CollectionService(
-        fetcher, new RawStore(rawDir), List.of(extractors), kafka, JSON, meters);
+        fetcher,
+        new RawStore(rawDir),
+        List.of(extractors),
+        kafka,
+        JSON,
+        meters,
+        new UrlDiscovery(fetcher, JSON));
   }
 
   static SourceSpec spec(String id, SourceSpec.Format format, Map<String, String> recipe) {

@@ -48,6 +48,7 @@ public class CollectionService {
   private final JsonMapper json;
   private final Clock clock;
   private final MeterRegistry meters;
+  private final UrlDiscovery discovery;
   private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
   public CollectionService(
@@ -56,8 +57,10 @@ public class CollectionService {
       List<Extractor> extractors,
       KafkaTemplate<String, String> kafka,
       JsonMapper json,
-      MeterRegistry meters) {
+      MeterRegistry meters,
+      UrlDiscovery discovery) {
     this.meters = meters;
+    this.discovery = discovery;
     this.fetcher = fetcher;
     this.raw = raw;
     extractors.forEach(e -> this.extractors.put(e.format(), e));
@@ -134,7 +137,10 @@ public class CollectionService {
     }
 
     // The first ever run of a source with a history endpoint fetches the history.
-    String url = previous.isEmpty() && spec.backfillUrl() != null ? spec.backfillUrl() : spec.url();
+    String url =
+        previous.isEmpty() && spec.backfillUrl() != null
+            ? spec.backfillUrl()
+            : discovery.urlFor(spec);
     Optional<String> etag = force ? Optional.empty() : previous.map(RawStore.Entry::etag);
     FetchResult fetched = fetcher.fetch(url, etag);
 

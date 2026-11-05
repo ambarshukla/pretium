@@ -1,0 +1,52 @@
+{
+  "dataset_unique_id": "0037898",
+  "name": "Remittance Prices Worldwide",
+  "modified_on": "2026-09-28T08:35:39+00:00",
+  "resources": [
+    {
+      "resource_id": "41ef550e-1479-f011-b4cb-000d3a3b8890",
+      "resource_unique_id": "DR0095523",
+      "name": "Remittance Prices Worldwide (Complete Dataset)",
+      "resource_type": "others",
+      "description": "<p>Complete dataset containing provider- and service-level pricing data for all corridors tracked by the Remittance Prices Worldwide database,</p>",
+      "url": "https://datacatalogfiles.worldbank.org/ddh-published/0037898/DR0095523/rpw_dataset_2011_2025_q3.xlsx",
+      "format": "EXCEL"
+    },
+    {
+      "resource_id": "62dddf70-c2c7-eb11-bacc-000d3a5a1a58",
+      "resource_unique_id": "DR0045937",
+      "name": "Remittance Prices Worldwide (Sending Countries)",
+      "resource_type": "Query Tool",
+      "description": "This dataset is comprised of those countries sending remittances to other countries. ",
+      "url": null,
+      "format": "DATABANK"
+    },
+    {
+      "resource_id": "86dddf70-c2c7-eb11-bacc-000d3a5a1a58",
+      "resource_unique_id": "DR0045939",
+      "name": "Remittance Prices Worldwide (Corridors)",
+      "resource_type": "Query Tool",
+      "description": "This dataset is comprised of multiple countries sending and/or receiving remittances from multiple countries.",
+      "url": null,
+      "format": "DATABANK"
+    },
+    {
+      "resource_id": "f48f9772-c2c7-eb11-bacc-000d3a5a1c19",
+      "resource_unique_id": "DR0045938",
+      "name": "Remittance Prices Worldwide (Receiving Countries)",
+      "resource_type": "Query Tool",
+      "description": "This dataset is comprised of those countries receiving remittances from other countries. ",
+      "url": null,
+      "format": "DATABANK"
+    },
+    {
+      "resource_id": "800015e5-8e69-f011-bec2-6045bd078eca",
+      "resource_unique_id": "DR0095413",
+      "name": "Remittance Prices Worldwide (Quarterly Report)",
+      "resource_type": null,
+      "description": null,
+      "url": "https://datacatalogfiles.worldbank.org/ddh-published/0037898/DR0095413/RPW_main_report_and_annex_Q325.pdf",
+      "format": "PDF"
+    }
+  ]
+}

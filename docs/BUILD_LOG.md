@@ -162,3 +162,18 @@ selector) escaped the run without any report, so the failure never reached the o
 page. It is now an `EXTRACTION_FAILED` run like any other. A new service-level test runs the
 whole collection path (raw store, extractor, holding file, run report, metrics) with only the
 network and Kafka replaced.
+
+## 2026-11-05 · Following the remittance file to its next address
+
+**Problem.** The World Bank's remittance file is published at a new address each quarter,
+with a new resource id in the path, so the next address cannot be guessed. The old address
+keeps answering. A fixed URL would therefore go on reading the old file with every run
+"succeeding", and the freshness check (age of the last good run) would never notice.
+
+**Change.** A source can now name a catalogue entry to consult before each run. For
+`wb-rpw` that is the World Bank's data catalogue API, which lists the dataset's files by
+name; the collector takes the one named *Remittance Prices Worldwide (Complete Dataset)*.
+Guard rails: only an https address on the same host as the configured file is accepted, and
+any problem (the catalogue rate-limited us several times on the day this was built) falls
+back to the configured URL with a warning, so a failed lookup never stops a collection.
+Tested against a real catalogue response.

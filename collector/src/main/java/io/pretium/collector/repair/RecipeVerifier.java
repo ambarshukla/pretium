@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Decides whether a recipe reads a page correctly, by comparing everything it reads with the
@@ -32,7 +34,8 @@ public final class RecipeVerifier {
       int expected,
       int matched,
       List<String> wrong,
-      String error) {
+      String error,
+      List<Reading> readings) {
 
     /** Read numbers that differ from the truth: what an unverified repair would have published. */
     public int wrongCount() {
@@ -40,7 +43,22 @@ public final class RecipeVerifier {
     }
   }
 
+  /**
+   * One currency: what the recipe read and what the reference says. {@code read} is null when the
+   * recipe did not find the currency, {@code reference} when the reference has no rate for it.
+   */
+  public record Reading(String currency, BigDecimal read, BigDecimal reference) {
+
+    public boolean matches() {
+      return read != null && reference != null && read.compareTo(reference) == 0;
+    }
+  }
+
   private final ReferenceTruth truth;
+
+  public ReferenceTruth truth() {
+    return truth;
+  }
 
   public RecipeVerifier(ReferenceTruth truth) {
     this.truth = truth;
@@ -77,14 +95,21 @@ public final class RecipeVerifier {
                 public void quote(ProviderQuoteObserved quote) {}
               });
     } catch (ExtractionException | RuntimeException e) {
-      return new Verdict(false, null, 0, 0, 0, List.of(), e.getMessage());
+      return new Verdict(false, null, 0, 0, 0, List.of(), e.getMessage(), List.of());
     }
 
     LocalDate date = read.get(0).rateDate();
     Map<String, BigDecimal> expected = truth.on(date);
     if (expected.isEmpty()) {
       return new Verdict(
-          false, date, read.size(), 0, 0, List.of(), "no reference rates for " + date);
+          false,
+          date,
+          read.size(),
+          0,
+          0,
+          List.of(),
+          "no reference rates for " + date,
+          readings(read, expected));
     }
     int matched = 0;
     List<String> wrong = new ArrayList<>();
@@ -107,6 +132,29 @@ public final class RecipeVerifier {
                 ? wrong.size() + " values differ from the reference"
                 : "read " + matched + " of " + expected.size() + " currencies";
     return new Verdict(
-        accepted, date, read.size(), expected.size(), matched, List.copyOf(wrong), error);
+        accepted,
+        date,
+        read.size(),
+        expected.size(),
+        matched,
+        List.copyOf(wrong),
+        error,
+        readings(read, expected));
+  }
+
+  /** Every currency either side has, in alphabetical order. */
+  private static List<Reading> readings(
+      List<ReferenceRateObserved> read, Map<String, BigDecimal> expected) {
+    Map<String, BigDecimal> byCurrency = new TreeMap<>();
+    for (ReferenceRateObserved r : read) {
+      byCurrency.putIfAbsent(r.quote(), r.rate());
+    }
+    TreeSet<String> currencies = new TreeSet<>(byCurrency.keySet());
+    currencies.addAll(expected.keySet());
+    List<Reading> out = new ArrayList<>();
+    for (String c : currencies) {
+      out.add(new Reading(c, byCurrency.get(c), expected.get(c)));
+    }
+    return List.copyOf(out);
   }
 }

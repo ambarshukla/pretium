@@ -299,3 +299,70 @@ button.swap:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* Repairs and the parser lab */
+td.changed {
+  background: var(--warn-soft);
+}
+td.reading.good {
+  color: var(--accent);
+}
+td.reading.bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-weight: 600;
+}
+td.reading.missing {
+  color: var(--muted);
+}
+pre.reply {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+  overflow: auto;
+  background: var(--bg);
+  padding: 10px;
+  border-radius: 7px;
+}
+form.review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 760px;
+}
+form.review fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+label.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+label.wide {
+  flex-basis: 100%;
+}
+input[type="text"],
+input[type="password"],
+textarea {
+  font: inherit;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+textarea.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

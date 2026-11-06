@@ -6,11 +6,16 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Measures selector repair against the real history of the ECB's rates page.
@@ -72,6 +77,7 @@ public final class RepairEval {
     List<SourceSpec.Recipe> library = new ArrayList<>(List.of(current));
     int nextVersion = current.version() + 1;
     List<Row> rows = new ArrayList<>();
+    List<Casebook.Case> cases = new ArrayList<>();
     int proposals = 0;
     int proposalsAccepted = 0;
     int proposalsWithWrongNumbers = 0;
@@ -82,6 +88,9 @@ public final class RepairEval {
 
     for (Path page : files) {
       String name = page.getFileName().toString();
+      String snapshot = name.replace(".html", "");
+      String archiveUrl = "https://web.archive.org/web/" + snapshot + "/" + spec.url();
+      SourceSpec.Recipe failing = current;
       RecipeVerifier.Verdict verdict = verifier.verify(page, current);
       if (verdict.accepted()) {
         rows.add(
@@ -123,6 +132,15 @@ public final class RepairEval {
                 0,
                 0,
                 ""));
+        cases.add(
+            new Casebook.Case(
+                snapshot,
+                archiveUrl,
+                String.valueOf(knownVerdict.date()),
+                Outcome.REUSED.name(),
+                Casebook.Attempt.of("recipe", failing, verdict),
+                List.of(),
+                Casebook.Attempt.of("library", known, knownVerdict)));
         continue;
       }
 
@@ -134,6 +152,9 @@ public final class RepairEval {
       int calls = 0;
       long millis = 0;
       StringBuilder note = new StringBuilder("v" + current.version() + ": " + error);
+      List<Casebook.Attempt> tried = new ArrayList<>();
+      // The failing recipe may not have found the date; a proposal that did tells us the day.
+      LocalDate seenDate = verdict.date();
       for (int attempt = 1; attempt <= ATTEMPTS && !healed; attempt++) {
         OllamaRepairer.Proposal proposal;
         try {
@@ -150,6 +171,10 @@ public final class RepairEval {
         SourceSpec.Recipe candidate =
             new SourceSpec.Recipe(nextVersion, proposal.recipe().settings());
         RecipeVerifier.Verdict v = verifier.verify(page, candidate);
+        tried.add(Casebook.Attempt.proposed(proposal, candidate, v));
+        if (seenDate == null) {
+          seenDate = v.date();
+        }
         if (v.wrongCount() > 0) {
           proposalsWithWrongNumbers++;
           wrongNumbersBlocked += v.wrongCount();
@@ -180,11 +205,20 @@ public final class RepairEval {
         }
       }
       llmMillisTotal += millis;
+      cases.add(
+          new Casebook.Case(
+              snapshot,
+              archiveUrl,
+              String.valueOf(seenDate),
+              healed ? Outcome.HEALED.name() : Outcome.HUMAN_NEEDED.name(),
+              Casebook.Attempt.of("recipe", failing, verdict),
+              List.copyOf(tried),
+              healed ? tried.get(tried.size() - 1) : null));
       if (!healed) {
         rows.add(
             new Row(
                 name,
-                String.valueOf(verdict.date()),
+                String.valueOf(seenDate),
                 Outcome.HUMAN_NEEDED,
                 current.version(),
                 calls,
@@ -206,7 +240,26 @@ public final class RepairEval {
         llmMillisTotal,
         promptTokens,
         outputTokens);
+    String reportName = report.getFileName().toString();
+    Path casebook =
+        report.resolveSibling(
+            (reportName.endsWith(".md")
+                    ? reportName.substring(0, reportName.length() - 3)
+                    : reportName)
+                + ".json");
+    JsonMapper.builder()
+        .enable(SerializationFeature.INDENT_OUTPUT)
+        .build()
+        .writeValue(
+            casebook.toFile(),
+            new Casebook(
+                spec.id(),
+                spec.url(),
+                repairer.model(),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
+                cases));
     System.out.println("report: " + report.toAbsolutePath());
+    System.out.println("casebook: " + casebook.toAbsolutePath());
   }
 
   private static void write(

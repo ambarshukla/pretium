@@ -1,0 +1,201 @@
+package io.pretium.collector.review;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.pretium.collector.raw.RawStore;
+import io.pretium.collector.repair.Casebook;
+import io.pretium.collector.source.SourceCatalog;
+import io.pretium.collector.source.SourceSpec;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
+
+/**
+ * Review decisions and lab runs against a real case from the casebook: the ECB page as archived on
+ * 15 April 2019, a copy that ends in the middle of the rates table (13 of 36 currencies). No recipe
+ * can read it exactly, the model's could not, and neither can a person's.
+ */
+class ReviewControllerTest {
+
+  static final String SOURCE = "ecb-reference-html";
+  static final String TRUNCATED = "20190415031708";
+  static final String KEY = "a-review-key";
+
+  @TempDir Path tmp;
+
+  final JsonMapper json = JsonMapper.builder().build();
+  SourceCatalog sources;
+  RepairCases cases;
+  Lab lab;
+  Path reviewDir;
+
+  static Path fixture(String name) throws Exception {
+    return Path.of(ReviewControllerTest.class.getResource("/fixtures/" + name).toURI());
+  }
+
+  @BeforeEach
+  void setUp() throws Exception {
+    Path raw = tmp.resolve("raw");
+    Files.createDirectories(raw.resolve("ecb-sdmx-exr"));
+    Files.copy(
+        fixture("ecb-sdmx-2019-04-12.csv"), raw.resolve("ecb-sdmx-exr").resolve("history.csv"));
+    Path archive = Files.createDirectories(tmp.resolve("archive"));
+    Files.copy(
+        fixture("ecb-reference-2019-04-12-archived-truncated.html"),
+        archive.resolve(TRUNCATED + ".html"));
+    reviewDir = tmp.resolve("review");
+
+    sources = new SourceCatalog();
+    cases = new RepairCases(sources, json);
+    lab = new Lab(new RawStore(raw), json, raw, archive.toString(), "");
+  }
+
+  ReviewController controller(String key) throws Exception {
+    return new ReviewController(cases, new DecisionLog(reviewDir, json), lab, sources, key);
+  }
+
+  static int status(ResponseStatusException e) {
+    return e.getStatusCode().value();
+  }
+
+  @Test
+  void theCasebookShipsWithTheCollector() {
+    assertThat(cases.casebook(SOURCE)).isPresent();
+    Casebook.Case c = cases.find(SOURCE, TRUNCATED).orElseThrow();
+
+    assertThat(c.outcome()).isEqualTo("HUMAN_NEEDED");
+    assertThat(c.ratesDate()).isEqualTo("2019-04-12");
+    assertThat(c.after()).isNull();
+    assertThat(c.proposals()).hasSize(2).allSatisfy(p -> assertThat(p.accepted()).isFalse());
+    // Only recipes the verifier accepted on some real page are offered as known recipes.
+    assertThat(cases.knownRecipes(SOURCE))
+        .extracting(SourceSpec.Recipe::version)
+        .containsExactly(1, 2, 3);
+  }
+
+  @Test
+  void aRecipeWrittenByAPersonIsHeldToTheSameRuleAsTheModels() throws Exception {
+    ReviewController controller = controller(KEY);
+    // The recipe that read this layout on every other page of the time.
+    Map<String, String> v2 = cases.find(SOURCE, TRUNCATED).orElseThrow().before().recipe();
+
+    assertThatThrownBy(
+            () ->
+                controller.decide(
+                    SOURCE,
+                    TRUNCATED,
+                    KEY,
+                    new ReviewController.DecisionRequest(
+                        DecisionLog.Action.NEW_RECIPE, v2, "this worked on the month before")))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class,
+            e -> {
+              assertThat(status(e)).isEqualTo(422);
+              assertThat(e.getReason()).contains("read 13 of 36");
+            });
+    assertThat(new DecisionLog(reviewDir, json).all()).isEmpty();
+  }
+
+  @Test
+  void aBrokenPageIsDismissedWithAReasonAndTheDecisionIsKept() throws Exception {
+    ReviewController controller = controller(KEY);
+    ReviewController.DecisionRequest noReason =
+        new ReviewController.DecisionRequest(DecisionLog.Action.DISMISS_PAGE, null, " ");
+
+    assertThatThrownBy(() -> controller.decide(SOURCE, TRUNCATED, KEY, noReason))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(400));
+
+    controller.decide(
+        SOURCE,
+        TRUNCATED,
+        KEY,
+        new ReviewController.DecisionRequest(
+            DecisionLog.Action.DISMISS_PAGE, null, "archived copy ends inside the table"));
+
+    // A new log over the same folder: the decision is on disk, not in memory.
+    assertThat(new DecisionLog(reviewDir, json).all())
+        .singleElement()
+        .satisfies(
+            d -> {
+              assertThat(d.action()).isEqualTo(DecisionLog.Action.DISMISS_PAGE);
+              assertThat(d.note()).isEqualTo("archived copy ends inside the table");
+            });
+    assertThat(controller.list().cases())
+        .filteredOn(s -> s.snapshot().equals(TRUNCATED))
+        .singleElement()
+        .satisfies(
+            s -> assertThat(s.decision().action()).isEqualTo(DecisionLog.Action.DISMISS_PAGE));
+    assertThat(controller.detail(SOURCE, TRUNCATED).decisions()).hasSize(1);
+  }
+
+  @Test
+  void thereIsNoRepairToConfirmWhenNothingReadThePage() throws Exception {
+    assertThatThrownBy(
+            () ->
+                controller(KEY)
+                    .decide(
+                        SOURCE,
+                        TRUNCATED,
+                        KEY,
+                        new ReviewController.DecisionRequest(
+                            DecisionLog.Action.CONFIRM_REPAIR, null, "")))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(400));
+  }
+
+  @Test
+  void withoutTheRightKeyNothingIsWrittenAndNoModelRuns() throws Exception {
+    ReviewController.DecisionRequest dismiss =
+        new ReviewController.DecisionRequest(DecisionLog.Action.DISMISS_PAGE, null, "broken");
+
+    assertThatThrownBy(() -> controller(KEY).decide(SOURCE, TRUNCATED, "wrong", dismiss))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(401));
+    assertThatThrownBy(() -> controller("").decide(SOURCE, TRUNCATED, KEY, dismiss))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(403));
+    assertThatThrownBy(
+            () ->
+                controller(KEY)
+                    .run(
+                        null,
+                        new ReviewController.RunRequest(
+                            "archive:" + TRUNCATED, null, "qwen2.5-coder:7b", null)))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(401));
+    assertThat(new DecisionLog(reviewDir, json).all()).isEmpty();
+  }
+
+  @Test
+  void aKnownRecipeRunsInTheLabWithoutAKeyAndShowsEveryCurrency() throws Exception {
+    Lab.Result r =
+        controller(KEY)
+            .run(null, new ReviewController.RunRequest("archive:" + TRUNCATED, 2, null, null));
+
+    assertThat(r.accepted()).isFalse();
+    assertThat(r.ratesDate()).isEqualTo("2019-04-12");
+    assertThat(r.matched()).isEqualTo(13);
+    assertThat(r.expected()).isEqualTo(36);
+    // All 36 reference currencies are listed: 13 read exactly, the rest not read at all.
+    assertThat(r.readings()).hasSize(36);
+    assertThat(r.readings().stream().filter(x -> x.read() == null)).hasSize(23);
+    assertThat(r.readings().stream().filter(x -> x.read() != null))
+        .allSatisfy(x -> assertThat(x.matches()).isTrue());
+  }
+
+  @Test
+  void pageIdsCannotNameAnyOtherFile() throws Exception {
+    assertThat(lab.file("archive:" + TRUNCATED)).isPresent();
+    assertThat(lab.file("archive:../../raw/ecb-sdmx-exr/history")).isEmpty();
+    assertThat(lab.file("collected:../index")).isEmpty();
+    assertThat(lab.file("archive:20190415031709")).isEmpty();
+    assertThat(lab.file(null)).isEmpty();
+  }
+}

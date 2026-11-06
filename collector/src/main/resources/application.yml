@@ -16,6 +16,10 @@ spring:
       properties:
         linger.ms: 20
         enable.idempotence: true
+  mvc:
+    # Errors as RFC 9457 problem details, so a refusal says why (the "detail" field).
+    problemdetails:
+      enabled: true
   task:
     scheduling:
       pool:
@@ -24,6 +28,17 @@ spring:
 pretium:
   raw-dir: ${PRETIUM_RAW_DIR:./data/raw}
   collect-on-startup: ${PRETIUM_COLLECT_ON_STARTUP:false}
+  review:
+    # Needed to record review decisions, run a model, or try a hand-written recipe.
+    # Unset: the review pages and the lab are read-only.
+    key: ${PRETIUM_REVIEW_KEY:}
+    # Append-only log of review decisions; inside the raw folder so it shares its volume.
+    dir: ${PRETIUM_REVIEW_DIR:${pretium.raw-dir}/_review}
+  lab:
+    # Archived copies of the ECB page (Internet Archive snapshots named <timestamp>.html).
+    archive-dir: ${PRETIUM_LAB_ARCHIVE_DIR:}
+    # A local Ollama; set to empty where there is none.
+    ollama-url: ${PRETIUM_OLLAMA_URL:http://localhost:11434}
   fetch:
     # Names the project and where to read about it, so a site operator who sees
     # us in their logs knows who we are and how to object.

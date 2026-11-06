@@ -268,6 +268,36 @@ class ReviewControllerTest {
   }
 
   @Test
+  void aBatchRunJudgesEveryPageAndATypedRecipeNeedsTheKey() throws Exception {
+    Lab.Batch b = controller(KEY).batch(null, new ReviewController.RunRequest(null, 2, null, null));
+
+    assertThat(b.pages()).isEqualTo(1);
+    assertThat(b.accepted()).isZero();
+    assertThat(b.wrongNumbers()).isZero();
+    assertThat(b.rows())
+        .singleElement()
+        .satisfies(
+            row -> {
+              assertThat(row.pageId()).isEqualTo("archive:" + TRUNCATED);
+              assertThat(row.matched()).isEqualTo(13);
+              assertThat(row.error()).contains("read 13 of 36");
+            });
+    // The same recipe again comes from the cache: the same object.
+    assertThat(controller(KEY).batch(null, new ReviewController.RunRequest(null, 2, null, null)))
+        .isSameAs(b);
+
+    assertThatThrownBy(
+            () ->
+                controller(KEY)
+                    .batch(
+                        null,
+                        new ReviewController.RunRequest(
+                            null, null, null, Map.of("rowSelector", "tr"))))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(401));
+  }
+
+  @Test
   void pageIdsCannotNameAnyOtherFile() throws Exception {
     assertThat(lab.file("archive:" + TRUNCATED)).isPresent();
     assertThat(lab.file("archive:../../raw/ecb-sdmx-exr/history")).isEmpty();

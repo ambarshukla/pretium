@@ -36,6 +36,9 @@ import org.springframework.web.server.ResponseStatusException;
  *   <li>{@code POST /api/v1/lab/runs} — run one parser against one page; nothing is stored
  *   <li>{@code POST /api/v1/lab/view} — one raw page: its source, a safe rendering with what a
  *       recipe matched outlined, and what a model would be shown and asked
+ *   <li>{@code POST /api/v1/lab/batch} — one recipe over every page, judged by the verifier
+ *   <li>{@code GET /api/v1/lab/bench} — models compared: repairing selectors against reading the
+ *       numbers themselves (a result file made offline by {@code ModelBench})
  * </ul>
  *
  * <p>Anything that writes, runs a model, or runs a recipe a person typed needs the review key
@@ -317,6 +320,43 @@ public class ReviewController {
     return lab.runRecipe(
         req.pageId(), page, "human", new SourceSpec.Recipe(0, clean(req.recipe())));
   }
+
+  /**
+   * One recipe over every page the lab has. A known recipe needs no key; a typed one does, as for
+   * single runs.
+   */
+  @PostMapping("/api/v1/lab/batch")
+  public Lab.Batch batch(
+      @RequestHeader(value = "X-Review-Key", required = false) String given,
+      @RequestBody RunRequest req)
+      throws IOException {
+    if (req == null || (req.recipeVersion() == null) == (req.recipe() == null)) {
+      throw bad("choose exactly one recipe: recipeVersion or recipe");
+    }
+    if (req.recipeVersion() != null) {
+      return lab.batch(
+          cases.knownRecipes(Lab.SOURCE).stream()
+              .filter(k -> k.version() == req.recipeVersion())
+              .findFirst()
+              .orElseThrow(() -> notFound("no such recipe version")));
+    }
+    requireKey(given);
+    return lab.batch(new SourceSpec.Recipe(0, clean(req.recipe())));
+  }
+
+  @GetMapping("/api/v1/lab/bench")
+  public tools.jackson.databind.JsonNode bench() throws IOException {
+    try (java.io.InputStream in =
+        getClass().getResourceAsStream("/bench/" + Lab.SOURCE + ".json")) {
+      if (in == null) {
+        throw notFound("no model benchmark has been run");
+      }
+      return JSON.readTree(in);
+    }
+  }
+
+  private static final tools.jackson.databind.json.JsonMapper JSON =
+      tools.jackson.databind.json.JsonMapper.builder().build();
 
   @ExceptionHandler(Lab.Busy.class)
   @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)

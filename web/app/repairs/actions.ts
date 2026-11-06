@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { collectorPost, viewPart, type ViewPart, type Action, type Decision, type LabResult, type PageView, type PageViewPart, type Posted, type Recipe } from "@/lib/collector";
+import { collectorPost, viewPart, type Batch, type ViewPart, type Action, type Decision, type LabResult, type PageView, type PageViewPart, type Posted, type Recipe } from "@/lib/collector";
 
 // Server actions: the browser calls these, and only this Next.js server talks to the
 // collector. The review key travels from the form to the collector and is checked there.
@@ -30,6 +30,14 @@ export type RunChoice = { recipeVersion: number } | { model: string } | { recipe
 
 export async function runLab(pageId: string, choice: RunChoice, key: string): Promise<Posted<LabResult>> {
   return collectorPost<LabResult>("/api/v1/lab/runs", { pageId, ...choice }, key);
+}
+
+/** One recipe over every page the lab has, judged by the verifier. A typed recipe needs the key. */
+export async function batchLab(
+  choice: { recipeVersion: number } | { recipe: Recipe },
+  key: string,
+): Promise<Posted<Batch>> {
+  return collectorPost<Batch>("/api/v1/lab/batch", choice, key);
 }
 
 /**

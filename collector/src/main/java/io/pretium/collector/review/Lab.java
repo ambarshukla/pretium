@@ -147,6 +147,31 @@ public class Lab {
       String digest,
       String prompt) {}
 
+  /**
+   * One page in a batch run: what the recipe read there, judged by the verifier.
+   *
+   * @param wrong numbers read that differ from the reference
+   */
+  public record BatchRow(
+      String pageId,
+      String when,
+      String ratesDate,
+      boolean accepted,
+      int read,
+      int matched,
+      int expected,
+      int wrong,
+      String error) {}
+
+  /** One recipe over every page the lab has. */
+  public record Batch(
+      Map<String, String> recipe,
+      int pages,
+      int accepted,
+      int wrongNumbers,
+      long millis,
+      List<BatchRow> rows) {}
+
   /** Thrown when a model is already working: one at a time, since each takes about a minute. */
   public static class Busy extends RuntimeException {
     Busy() {
@@ -162,6 +187,8 @@ public class Lab {
       HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
   private final JsonMapper json;
   private final Semaphore modelSlot = new Semaphore(1);
+  private final Semaphore batchSlot = new Semaphore(1);
+  private final Map<String, Batch> batches = new java.util.concurrent.ConcurrentHashMap<>();
 
   private ReferenceTruth truth;
   private List<String> truthFiles = List.of();
@@ -480,6 +507,60 @@ public class Lab {
           r.trace());
     } finally {
       modelSlot.release();
+    }
+  }
+
+  /**
+   * Runs one recipe over every page and judges each with the verifier: the repair evaluation, live,
+   * for one recipe. A few seconds for about 120 pages; one batch at a time, and the result is kept
+   * until the reference data changes.
+   */
+  public Batch batch(SourceSpec.Recipe recipe) throws IOException {
+    RecipeVerifier verifier = verifier();
+    String key = truthFiles + "|" + new java.util.TreeMap<>(recipe.settings());
+    Batch cached = batches.get(key);
+    if (cached != null) {
+      return cached;
+    }
+    if (!batchSlot.tryAcquire()) {
+      throw new Busy();
+    }
+    try {
+      long start = System.nanoTime();
+      List<BatchRow> rows = new ArrayList<>();
+      for (Page page : pages()) {
+        Optional<Path> file = file(page.id());
+        if (file.isEmpty()) {
+          continue;
+        }
+        RecipeVerifier.Verdict v = verifier.verify(file.get(), recipe);
+        rows.add(
+            new BatchRow(
+                page.id(),
+                page.when(),
+                v.date() == null ? null : v.date().toString(),
+                v.accepted(),
+                v.read(),
+                v.matched(),
+                v.expected(),
+                v.wrongCount(),
+                v.error()));
+      }
+      Batch b =
+          new Batch(
+              recipe.settings(),
+              rows.size(),
+              (int) rows.stream().filter(BatchRow::accepted).count(),
+              rows.stream().mapToInt(BatchRow::wrong).sum(),
+              (System.nanoTime() - start) / 1_000_000,
+              List.copyOf(rows));
+      if (batches.size() > 50) {
+        batches.clear();
+      }
+      batches.put(key, b);
+      return b;
+    } finally {
+      batchSlot.release();
     }
   }
 

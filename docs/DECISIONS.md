@@ -199,3 +199,27 @@ The choices that shape pretium, why they were made, and what was given up. Newes
   recipes only.
 - **Not yet:** an accepted human recipe does not reach the running collector by itself; it is
   recorded with its verification, for a person to put into the source's recipe.
+
+## D-019 · The lab shows the page, the parser as code, and every step of a run
+
+- **Choice:** the parser lab is a workbench for one engineer debugging the HTML parser. It
+  shows the raw page in the browser (rendered, and as source with line numbers), outlines
+  what each of a recipe's selectors matched in both, writes the recipe out as the Java the
+  generic extractor in effect runs with it, diffs any two recipes as code, and traces a run
+  step by step: the element the date selector found, the text the date pattern kept, then
+  every row the row selector matched, with the text of its currency and rate cells, the
+  parsed number, the reference, and why a row was skipped.
+- **One code path:** the trace is produced by the extractor itself
+  (`HtmlRateTableExtractor.trace`), which the collector's own extraction also runs through,
+  so the lab cannot show a different parser from the one in production.
+- **A rendered page runs nothing and fetches nothing:** scripts, frames, external links and
+  event handlers are removed, a content security policy of `default-src 'none'` is added, and
+  the result goes into an `<iframe sandbox>` with no permissions. Opening a page in the lab
+  sends no request to the ECB or the archive.
+- **The prompt is part of the record:** the casebook keeps each prompt exactly as it was
+  sent, and the lab shows the prompt a model would get for any page, so a reply can be
+  judged against what the model was actually shown, and the prompt can be tried on another
+  model by hand.
+- **Archived copies of the page are on the server** (119 Internet Archive snapshots, 31 MB,
+  mounted read-only), so the lab and the case pages show them inline, and a recipe written for
+  a case can be checked there.

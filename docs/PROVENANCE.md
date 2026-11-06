@@ -87,7 +87,13 @@ about. `ecb-sdmx-2019-04-12.csv` holds the 36 rows for that day from the SDMX hi
 `collector/src/main/resources/repair/ecb-reference-html.json` is the casebook written by the
 repair evaluation (`RepairEval`) over 119 archived copies of the ECB rates page: for each page
 the recipe in use could not read, every rate each recipe read, the ECB's rate for the same day,
-and the model's replies exactly as they came back. Rates are Source: ECB.
+the prompts as sent and the model's replies exactly as they came back. Rates are Source: ECB.
+
+The deployed server also holds the 119 archived copies of the ECB rates page that the repair
+evaluation replays (Internet Archive snapshots, downloaded with the archive's unmodified
+`id_` form). They are not in this repository. The parser lab shows them with scripts
+removed and nothing loaded from elsewhere, credited "Source: ECB" with a link to each copy
+at the Internet Archive.
 
 `wb-ddh-dataset-0037898.json` is an excerpt of the World Bank data catalogue's entry for the
 dataset, captured on 5 November 2026: the identifying fields and the `resources` list,

@@ -3,12 +3,14 @@ package io.pretium.collector.review;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.pretium.collector.extract.HtmlRateTableExtractor;
 import io.pretium.collector.raw.RawStore;
 import io.pretium.collector.repair.Casebook;
 import io.pretium.collector.source.SourceCatalog;
 import io.pretium.collector.source.SourceSpec;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -188,6 +190,81 @@ class ReviewControllerTest {
     assertThat(r.readings().stream().filter(x -> x.read() == null)).hasSize(23);
     assertThat(r.readings().stream().filter(x -> x.read() != null))
         .allSatisfy(x -> assertThat(x.matches()).isTrue());
+  }
+
+  @Test
+  void aRunShowsEveryStepOfTheExtraction() throws Exception {
+    Lab.Result r =
+        controller(KEY)
+            .run(null, new ReviewController.RunRequest("archive:" + TRUNCATED, 2, null, null));
+
+    HtmlRateTableExtractor.Trace t = r.trace();
+    assertThat(t.error()).isNull();
+    assertThat(t.dateStep().elementText()).contains("12 April 2019");
+    assertThat(t.date()).hasToString("2019-04-12");
+    // The archived copy ends inside the 14th row: its currency is there, its rate is not.
+    assertThat(t.rows()).hasSize(14);
+    assertThat(t.rows().get(0).currencyText()).isEqualTo("USD");
+    assertThat(t.rows().get(13))
+        .satisfies(
+            row -> {
+              assertThat(row.currencyText()).isEqualTo("HRK");
+              assertThat(row.rateText()).isNull();
+              assertThat(row.skipped()).isEqualTo("no rate cell");
+            });
+    assertThat(t.read()).isEqualTo(13);
+  }
+
+  @Test
+  void aBrokenSelectorIsShownWhereItStopped() throws Exception {
+    Map<String, String> v2 =
+        new java.util.LinkedHashMap<>(
+            cases.find(SOURCE, TRUNCATED).orElseThrow().before().recipe());
+    v2.put("rateSelector", "td.no-such-cell");
+
+    Lab.Result r =
+        controller(KEY)
+            .run(KEY, new ReviewController.RunRequest("archive:" + TRUNCATED, null, null, v2));
+
+    assertThat(r.accepted()).isFalse();
+    assertThat(r.trace().error()).contains("none contained both");
+    assertThat(r.trace().rows())
+        .isNotEmpty()
+        .allSatisfy(row -> assertThat(row.skipped()).isEqualTo("no rate cell"));
+  }
+
+  @Test
+  void thePageIsShownWithWhatTheRecipeMatchedAndNothingThatRuns() throws Exception {
+    Lab.View v =
+        controller(KEY).view(new ReviewController.ViewRequest("archive:" + TRUNCATED, 2, null));
+
+    assertThat(v.source()).isEqualTo(Files.readString(lab.file("archive:" + TRUNCATED).get()));
+    assertThat(v.archiveUrl()).startsWith("https://web.archive.org/web/" + TRUNCATED + "/");
+    assertThat(v.marks()).filteredOn(m -> m.kind().equals("row")).hasSize(14);
+    assertThat(v.marks()).filteredOn(m -> m.kind().equals("rate")).hasSize(13);
+    assertThat(v.marks()).filteredOn(m -> m.kind().equals("date")).singleElement();
+    // Every mark points at a real line of the source.
+    long lines = v.source().lines().count();
+    assertThat(v.marks()).allSatisfy(m -> assertThat(m.line()).isBetween(1, (int) lines));
+    for (String html : List.of(v.rendered(), v.region())) {
+      assertThat(html)
+          .contains("Content-Security-Policy")
+          .contains("pretium-rate")
+          .doesNotContainIgnoringCase("<script");
+    }
+    assertThat(v.prompt()).contains("Current recipe:").contains(v.digest());
+  }
+
+  @Test
+  void anInvalidSelectorIsReportedNotThrown() throws Exception {
+    Lab.View v =
+        controller(KEY)
+            .view(
+                new ReviewController.ViewRequest(
+                    "archive:" + TRUNCATED, null, Map.of("rowSelector", "table >>> tr")));
+    assertThat(v.selectorError()).isNotBlank();
+    assertThat(v.marks()).isEmpty();
+    assertThat(v.region()).isNull();
   }
 
   @Test

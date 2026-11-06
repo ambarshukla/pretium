@@ -72,9 +72,12 @@ services:
       # No model runner on this box; reviews stay read-only unless a key is set in .env.
       PRETIUM_OLLAMA_URL: ""
       PRETIUM_REVIEW_KEY: ${PRETIUM_REVIEW_KEY:-}
+      # Archived copies of the ECB page for the parser lab, read-only.
+      PRETIUM_LAB_ARCHIVE_DIR: /data/archive
       JAVA_TOOL_OPTIONS: "-Xmx320m -XX:+UseSerialGC"
     volumes:
       - ${PRETIUM_HOST_DATA:-./data}/raw:/data/raw
+      - ${PRETIUM_HOST_DATA:-./data}/archive:/data/archive:ro
     mem_limit: 560m
 
   catalog:

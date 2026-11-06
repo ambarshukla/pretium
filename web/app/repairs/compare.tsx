@@ -1,44 +1,7 @@
-import type { Reading, Recipe } from "@/lib/collector";
+import type { Reading } from "@/lib/collector";
 
-// Side-by-side views used by the review pages and the lab: recipes key by key, and
-// what each recipe read currency by currency, next to the reference.
-
-const KEYS = ["dateSelector", "dateFormat", "dateRegex", "rowSelector", "currencySelector", "rateSelector", "base"];
-
-export function RecipeCompare({ columns }: { columns: { label: string; recipe: Recipe | null }[] }) {
-  const keys = KEYS.filter((k) => columns.some((c) => c.recipe?.[k]));
-  const first = columns[0]?.recipe ?? {};
-  return (
-    <div className="table-wrap">
-      <table className="compare">
-        <thead>
-          <tr>
-            <th>Setting</th>
-            {columns.map((c) => (
-              <th key={c.label}>{c.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {keys.map((k) => (
-            <tr key={k}>
-              <td className="mono">{k}</td>
-              {columns.map((c, i) => {
-                const v = c.recipe?.[k];
-                const changed = i > 0 && c.recipe && (v ?? "") !== (first[k] ?? "");
-                return (
-                  <td key={c.label} className={`mono${changed ? " changed" : ""}`}>
-                    {c.recipe ? (v ?? <span className="muted">–</span>) : <span className="muted">none</span>}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+// Side-by-side views used by the review pages and the lab: what each recipe read,
+// currency by currency, next to the reference.
 
 function cell(r: Reading | undefined) {
   if (!r || r.read === null) return { text: "not read", cls: "missing" };

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { collectorPost, type Action, type Decision, type LabResult, type Posted, type Recipe } from "@/lib/collector";
+import { collectorPost, viewPart, type ViewPart, type Action, type Decision, type LabResult, type PageView, type PageViewPart, type Posted, type Recipe } from "@/lib/collector";
 
 // Server actions: the browser calls these, and only this Next.js server talks to the
 // collector. The review key travels from the form to the collector and is checked there.
@@ -30,4 +30,17 @@ export type RunChoice = { recipeVersion: number } | { model: string } | { recipe
 
 export async function runLab(pageId: string, choice: RunChoice, key: string): Promise<Posted<LabResult>> {
   return collectorPost<LabResult>("/api/v1/lab/runs", { pageId, ...choice }, key);
+}
+
+/**
+ * A raw page, with what the recipe matched outlined. Selectors only: no key needed.
+ * Only the part being looked at goes to the browser: a page and its renderings can be 1 MB.
+ */
+export async function viewPage(
+  pageId: string,
+  recipe: Recipe | null,
+  part: ViewPart | null,
+): Promise<Posted<PageViewPart>> {
+  const res = await collectorPost<PageView>("/api/v1/lab/view", { pageId, recipe });
+  return res.ok ? { ok: true, data: viewPart(res.data, part) } : res;
 }

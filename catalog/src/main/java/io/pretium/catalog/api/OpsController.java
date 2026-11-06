@@ -119,7 +119,8 @@ public class OpsController {
   public List<Map<String, Object>> quarantine(@RequestParam(defaultValue = "50") int limit) {
     return jdbc.queryForList(
         """
-        select source_record_id as "sourceRecordId", period as "period", send_country_name as "sendName",
+        select source_id as "sourceId", source_record_id as "sourceRecordId", period as "period",
+               send_country_name as "sendName",
                receive_country_name as "receiveName", provider as "provider", amount_usd as "amountUsd",
                fee as "fee", send_amount as "sendAmount", fx_margin_pct as "fxMarginPct",
                total_cost_pct as "totalCostPct", findings::text as "findings", evidence_sha256 as "evidenceSha256"

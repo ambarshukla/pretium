@@ -154,3 +154,24 @@ The choices that shape pretium, why they were made, and what was given up. Newes
 - **Cost:** the host builds the images itself, one at a time (about 4 GB shared with other
   projects), so a deploy takes several minutes. A container registry would be faster and is
   not worth its cost at this size.
+
+## D-017 · Check the survey's market rate against the ECB, and explain before flagging
+
+- **Choice:** for every survey quote between two currencies the ECB publishes, compare the
+  survey's "interbank rate" with the ECB cross rate on the day the quote was observed (or up to
+  four days before, for weekends and holidays). Classify each quote by which rate it actually
+  fits: the receiving country's currency, US dollars, euros, the currency sent (a rate of 1), or
+  the local rate written the wrong way round. Only the wrong-way-round and the unexplained are
+  flagged for a person.
+- **Why:** every FX margin on the site is measured against the survey's interbank rate, so it is
+  the number most worth checking, and the ECB is an independent publisher of the same quantity.
+  A plain "difference from the ECB" would have flagged 12% of quotes; almost all of them are
+  transfers that pay out in dollars or euros, which the survey records correctly.
+- **Tolerance 2%,** or the ECB rate rounded to the decimals the survey wrote. The ECB fixes once a
+  day; the survey records the rate at collection time, and on volatile days (the lira in 2021)
+  the two differ by more than 1% with neither wrong. Local-currency quotes are in fact a median
+  0.07% to 0.29% from the ECB, quarter by quarter.
+- **Receiving currency** comes from a table built from the official ISO 4217 lists, with validity
+  dates for the euro changeovers, and checked against them in a test. Countries with two legal
+  tenders, one of them ECB-quoted (El Salvador, Panama, Haiti, Namibia, Lesotho), are left out
+  rather than guessed.

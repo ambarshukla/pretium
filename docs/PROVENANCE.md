@@ -46,6 +46,16 @@ Collected through three channels, which must agree:
   pretium uses them as a reference, not as transaction rates.
 - **robots.txt** (read on every collection, cached for a day) allows all three URLs.
 
+### ISO 4217 currency codes (reference table, not collected)
+
+- **What:** which currency each country uses, for the comparison of the survey's interbank rate
+  with the ECB's (`catalog/src/main/resources/db/migration/V2__country_currency.sql`).
+- **Where:** the ISO 4217 lists published by SIX Financial Information, the ISO 4217
+  maintenance agency: list one (current currencies, published 2026-09-17) and list three
+  (historic currencies, for the euro changeovers), downloaded on 5 November 2026.
+- **Rows:** only countries in the remittance survey whose currency the ECB quotes, or the euro.
+  Each row keeps the ISO country name, and a test checks every row against the lists.
+
 ## How collection behaves
 
 - The User-Agent names the project and links to this repository.
@@ -71,3 +81,8 @@ in which a recipe reads the 3 November page but takes its date from a news capti
 `wb-ddh-dataset-0037898.json` is an excerpt of the World Bank data catalogue's entry for the
 dataset, captured on 5 November 2026: the identifying fields and the `resources` list,
 verbatim (the description, keywords and contact fields are left out).
+
+`catalog/src/test/resources/fixtures/iso4217-excerpt.xml` holds, verbatim, every entry of ISO
+4217 lists one and three for the countries in that table (SIX, downloaded 5 November 2026).
+The benchmark tests use real survey records from Q2 2016, Q4 2016 and Q3 2025 (record ids in
+the test code) and the ECB's reference rates for the days they were observed.

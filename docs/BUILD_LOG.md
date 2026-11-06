@@ -196,3 +196,37 @@ about 80 s, read through the new holding file). Every dashboard query was then e
 
 The duration panel now averages over a day, since an hourly window is empty for sources that
 run daily or weekly.
+
+## 2026-11-05 · The survey's market rate, checked against the ECB
+
+**Question.** Every FX margin the site shows is measured against the World Bank survey's own
+"interbank rate". Is that rate right? The ECB publishes the same quantity independently for
+about thirty currencies.
+
+**Result, over the whole history** (37 quarterly surveys, 2016 to 2025, 78,820 quotes, 69,814
+between currencies the ECB publishes):
+
+| | Quotes |
+|---|---|
+| Rate into the receiving country's currency, within 2% of the ECB | 58,270 |
+| Rate into another currency the transfer pays out in (US dollars, euros, or the currency sent) | 10,859 |
+| Local rate written the wrong way round | 80 |
+| Fits nothing (flagged) | 605 (0.9%) |
+
+Local-currency rates sit a median 0.07% to 0.29% from the ECB's, quarter by quarter (0.09% in
+Q3 2025, with 98% within 0.5%). The flagged quotes cluster in a few corridors and years:
+Israel to Morocco 2016 to 2020 (the rate given is dollars to dirhams), Russia to the Baltic
+states 2016 to 2019, Thailand to China and India in 2016 and 2017 (written the wrong way
+round), and lira corridors in 2021, when the lira fell fast. That looks like recording
+conventions in particular survey rounds, not random error.
+
+**What a plain comparison got wrong.** The first version measured every quote against the
+local currency and flagged 12%. Looking at the outliers showed that most are transfers that
+pay out in dollars or euros (Japan to Indonesia at 0.00676 is yen to dollars), which the
+survey records correctly. Two more details came from the data: a few rates are written to four
+decimals ("0.0008" for won to dollars) and only match once rounding is allowed for.
+
+**Also.** The query first took 4 seconds: the survey's currency column is `text` and the rates'
+is `char(3)`, so Postgres converted the indexed column and could not use the index. A cast on
+the other side brought it to 26 ms. The result is on the Operations page, and at
+`/api/v1/ops/benchmark?period=`.

@@ -57,6 +57,21 @@ public class RawStore {
     return Optional.empty();
   }
 
+  /** Every fetch of a source, oldest first (a file fetched twice appears twice). */
+  public synchronized List<Entry> entries(String sourceId) throws IOException {
+    Path index = root.resolve(sourceId).resolve("index.jsonl");
+    if (!Files.exists(index)) {
+      return List.of();
+    }
+    List<Entry> out = new java.util.ArrayList<>();
+    for (String line : Files.readAllLines(index, StandardCharsets.UTF_8)) {
+      if (!line.isBlank()) {
+        out.add(json.readValue(line, Entry.class));
+      }
+    }
+    return out;
+  }
+
   /** Hashes a downloaded file and moves it into the store. Identical content is kept once. */
   public synchronized Entry store(
       String sourceId, Path download, String url, String etag, String extension, Instant fetchedAt)

@@ -78,6 +78,17 @@ the rates table and everything the extractor reads are untouched.
 SDMX history file collected on 4 November 2026 (Source: ECB). It is the answer key for a test
 in which a recipe reads the 3 November page but takes its date from a news caption on it.
 
+`ecb-reference-2019-04-12-archived-truncated.html` is the ECB rates page as archived by the
+Internet Archive on 15 April 2019 (snapshot `20190415031708`): from the page's `<main>` element to
+the end of the file, verbatim, with a minimal `<html><body>` wrapper in front. The archived copy
+itself ends in the middle of the rates table (13 of 36 currencies), which is what the test is
+about. `ecb-sdmx-2019-04-12.csv` holds the 36 rows for that day from the SDMX history file.
+
+`collector/src/main/resources/repair/ecb-reference-html.json` is the casebook written by the
+repair evaluation (`RepairEval`) over 119 archived copies of the ECB rates page: for each page
+the recipe in use could not read, every rate each recipe read, the ECB's rate for the same day,
+and the model's replies exactly as they came back. Rates are Source: ECB.
+
 `wb-ddh-dataset-0037898.json` is an excerpt of the World Bank data catalogue's entry for the
 dataset, captured on 5 November 2026: the identifying fields and the `resources` list,
 verbatim (the description, keywords and contact fields are left out).

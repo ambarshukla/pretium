@@ -175,3 +175,27 @@ The choices that shape pretium, why they were made, and what was given up. Newes
   dates for the euro changeovers, and checked against them in a test. Countries with two legal
   tenders, one of them ECB-quoted (El Salvador, Panama, Haiti, Namibia, Lesotho), are left out
   rather than guessed.
+
+## D-018 · Repairs are reviewed by people, and a person's recipe meets the model's bar
+
+- **Choice:** every repair evaluation writes a casebook (JSON): for each page the recipe in use
+  could not read, every rate each recipe read next to the ECB's rate for that day, and the
+  model's replies verbatim. The casebook ships with the collector; the site shows it at
+  `/repairs`, case by case, old recipe against new. A person can confirm or reject a repair,
+  write a recipe for a page nothing could read, or dismiss a page that cannot be read (a broken
+  archive copy). The parser lab (`/lab`) runs any known recipe, a hand-written one, or a local
+  model against any raw page the server holds, and shows the result without storing it.
+- **A person's recipe is verified like the model's:** it is recorded only if every rate it reads
+  matches the reference exactly. The verifier, not the author, decides whether a recipe reads a
+  page correctly. A person's judgement is for what the verifier cannot know: a page that is
+  itself broken, or a repair that passes but is too brittle to keep (both need a note).
+- **Decisions are an append-only file in the collector's data volume,** not a database table:
+  the collector owns the pages, the reference and the recipes, so it is the one that can check a
+  decision, and a later decision supersedes an earlier one without erasing it.
+- **Writes, model runs and hand-written recipes need a review key** (`PRETIUM_REVIEW_KEY`, sent
+  as `X-Review-Key`, compared in constant time). Without one the pages are read-only. The site
+  has no user accounts, and the key keeps a public page from spending CPU on a model or writing
+  to the record. The deployed server has no model runner (4 GB of memory), so the lab there runs
+  recipes only.
+- **Not yet:** an accepted human recipe does not reach the running collector by itself; it is
+  recorded with its verification, for a person to put into the source's recipe.

@@ -230,3 +230,23 @@ decimals ("0.0008" for won to dollars) and only match once rounding is allowed f
 is `char(3)`, so Postgres converted the indexed column and could not use the index. A cast on
 the other side brought it to 26 ms. The result is on the Operations page, and at
 `/api/v1/ops/benchmark?period=`.
+
+## 2026-11-06 · Repairs, reviewed by people; a parser lab
+
+The repair evaluation now writes a casebook alongside its report: every page the recipe in use
+could not read, what each recipe and each model proposal read on it, currency by currency, next
+to the ECB's own rate for that day, and the model's reply exactly as it came back. Re-running it
+over the 119 archived pages gave the same result as on 5 November (temperature 0): 116 pages read
+by a known recipe, 2 repaired by the model and verified, 1 needing a person, 0 wrong numbers.
+
+The site shows the casebook at `/repairs`. The case that needs a person is the copy archived on
+15 April 2019, which ends inside the rates table: the recipe of the time and both model
+proposals read the same 13 of 36 rates exactly and nothing else. A person can dismiss it
+(the page is broken, not the recipe), and a recipe a person writes for it is refused the same
+way the model's were: 13 of 36 is not a reading.
+
+`/lab` runs a parser against a raw page and shows the result next to the reference: a recipe
+that once worked, a hand-written one, or a local model shown the page the way the repair loop
+shows it. Asked about the January 2017 page, `qwen2.5-coder:7b` proposed a recipe in 71 s
+(2,611 tokens in, 63 out) that read all 31 rates on it exactly. Nothing run in the lab is
+stored. Model runs and hand-written recipes need a review key; see DECISIONS D-018.

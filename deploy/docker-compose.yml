@@ -69,6 +69,9 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       PRETIUM_RAW_DIR: /data/raw
       PRETIUM_COLLECT_ON_STARTUP: ${PRETIUM_COLLECT_ON_STARTUP:-false}
+      # No model runner on this box; reviews stay read-only unless a key is set in .env.
+      PRETIUM_OLLAMA_URL: ""
+      PRETIUM_REVIEW_KEY: ${PRETIUM_REVIEW_KEY:-}
       JAVA_TOOL_OPTIONS: "-Xmx320m -XX:+UseSerialGC"
     volumes:
       - ${PRETIUM_HOST_DATA:-./data}/raw:/data/raw
@@ -98,9 +101,10 @@ services:
     image: pretium-web:latest
     container_name: pretium-web
     restart: unless-stopped
-    depends_on: [catalog]
+    depends_on: [catalog, collector]
     environment:
       CATALOG_URL: http://catalog:8082
+      COLLECTOR_URL: http://collector:8091
     networks: [default, proxy]
     mem_limit: 256m
 

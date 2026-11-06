@@ -1,0 +1,338 @@
+package io.pretium.collector.review;
+
+import io.pretium.collector.repair.Casebook;
+import io.pretium.collector.repair.RecipeVerifier;
+import io.pretium.collector.source.SourceCatalog;
+import io.pretium.collector.source.SourceSpec;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+/**
+ * Repair review and the parser lab.
+ *
+ * <ul>
+ *   <li>{@code GET /api/v1/repairs} — every case, with the latest decision on each
+ *   <li>{@code GET /api/v1/repairs/{source}/{snapshot}} — one case in full, with its decisions
+ *   <li>{@code POST /api/v1/repairs/{source}/{snapshot}/decisions} — record a decision (key)
+ *   <li>{@code GET /api/v1/lab} — pages, known recipes and models to run against them
+ *   <li>{@code POST /api/v1/lab/runs} — run one parser against one page; nothing is stored
+ * </ul>
+ *
+ * <p>Anything that writes, runs a model, or runs a recipe a person typed needs the review key
+ * ({@code X-Review-Key}). With no key configured, those are switched off and the rest is read-only.
+ */
+@RestController
+public class ReviewController {
+
+  private final RepairCases cases;
+  private final DecisionLog decisions;
+  private final Lab lab;
+  private final SourceCatalog sources;
+  private final byte[] key;
+
+  public ReviewController(
+      RepairCases cases,
+      DecisionLog decisions,
+      Lab lab,
+      SourceCatalog sources,
+      @Value("${pretium.review.key:}") String key) {
+    this.cases = cases;
+    this.decisions = decisions;
+    this.lab = lab;
+    this.sources = sources;
+    this.key = key.isBlank() ? null : key.getBytes(StandardCharsets.UTF_8);
+  }
+
+  /** A case as listed: enough to scan the queue. */
+  public record Summary(
+      String source,
+      String snapshot,
+      String ratesDate,
+      String outcome,
+      String error,
+      int proposals,
+      int wrongNumbersBlocked,
+      Integer fromVersion,
+      Integer toVersion,
+      DecisionLog.Decision decision) {}
+
+  public record Listing(
+      boolean reviewsEnabled,
+      List<Summary> cases,
+      Map<String, String> models,
+      Map<String, String> generatedAt) {}
+
+  public record Detail(
+      String source,
+      String pageUrl,
+      String model,
+      Casebook.Case repair,
+      boolean pageAvailable,
+      List<DecisionLog.Decision> decisions) {}
+
+  public record DecisionRequest(
+      DecisionLog.Action action, Map<String, String> recipe, String note) {}
+
+  public record LabInfo(
+      String source,
+      boolean keyRequiredForModelsAndCustomRecipes,
+      boolean reviewsEnabled,
+      List<Lab.Page> pages,
+      List<SourceSpec.Recipe> recipes,
+      List<String> models) {}
+
+  /**
+   * One run: a page, and exactly one of a known recipe version, a model, or a recipe a person
+   * wrote.
+   */
+  public record RunRequest(
+      String pageId, Integer recipeVersion, String model, Map<String, String> recipe) {}
+
+  @GetMapping("/api/v1/repairs")
+  public Listing list() throws IOException {
+    Map<String, DecisionLog.Decision> latest = latestDecisions();
+    Map<String, String> models = new LinkedHashMap<>();
+    Map<String, String> generated = new LinkedHashMap<>();
+    List<Summary> out =
+        cases.all().stream()
+            .peek(
+                b -> {
+                  models.put(b.source(), b.model());
+                  generated.put(b.source(), b.generatedAt());
+                })
+            .flatMap(
+                b ->
+                    b.cases().stream()
+                        .map(
+                            c ->
+                                new Summary(
+                                    b.source(),
+                                    c.snapshot(),
+                                    c.ratesDate(),
+                                    c.outcome(),
+                                    c.before().error(),
+                                    c.proposals().size(),
+                                    c.proposals().stream()
+                                        .mapToInt(
+                                            a ->
+                                                (int)
+                                                    a.readings().stream()
+                                                        .filter(
+                                                            r ->
+                                                                r.read() != null
+                                                                    && r.reference() != null
+                                                                    && !r.matches())
+                                                        .count())
+                                        .sum(),
+                                    c.before().recipeVersion(),
+                                    c.after() == null ? null : c.after().recipeVersion(),
+                                    latest.get(b.source() + "/" + c.snapshot()))))
+            .toList();
+    return new Listing(key != null, out, models, generated);
+  }
+
+  @GetMapping("/api/v1/repairs/{source}/{snapshot}")
+  public Detail detail(@PathVariable String source, @PathVariable String snapshot)
+      throws IOException {
+    Casebook book = cases.casebook(source).orElseThrow(() -> notFound("no such source"));
+    Casebook.Case c = cases.find(source, snapshot).orElseThrow(() -> notFound("no such case"));
+    List<DecisionLog.Decision> mine =
+        decisions.all().stream()
+            .filter(d -> d.source().equals(source) && d.snapshot().equals(snapshot))
+            .toList();
+    return new Detail(
+        source, book.pageUrl(), book.model(), c, lab.archived(snapshot).isPresent(), mine);
+  }
+
+  @PostMapping("/api/v1/repairs/{source}/{snapshot}/decisions")
+  @ResponseStatus(HttpStatus.CREATED)
+  public DecisionLog.Decision decide(
+      @PathVariable String source,
+      @PathVariable String snapshot,
+      @RequestHeader(value = "X-Review-Key", required = false) String given,
+      @RequestBody DecisionRequest req)
+      throws IOException {
+    requireKey(given);
+    Casebook.Case c = cases.find(source, snapshot).orElseThrow(() -> notFound("no such case"));
+    if (req == null || req.action() == null) {
+      throw bad("say what you decided: action is required");
+    }
+    String note = req.note() == null ? "" : req.note().strip();
+    Integer matched = null;
+    Integer expected = null;
+    Map<String, String> recipe = null;
+    switch (req.action()) {
+      case CONFIRM_REPAIR -> {
+        if (c.after() == null) {
+          throw bad("there is no repair to confirm: nothing read this page");
+        }
+        recipe = c.after().recipe();
+        matched = c.after().matched();
+        expected = c.after().expected();
+      }
+      case REJECT_REPAIR -> {
+        if (c.after() == null) {
+          throw bad("there is no repair to reject");
+        }
+        if (note.isEmpty()) {
+          throw bad("say why the repair is rejected: a note is required");
+        }
+      }
+      case DISMISS_PAGE -> {
+        if (note.isEmpty()) {
+          throw bad("say what is wrong with the page: a note is required");
+        }
+      }
+      case NEW_RECIPE -> {
+        Path page =
+            lab.archived(snapshot)
+                .orElseThrow(
+                    () ->
+                        new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "this server does not have the archived page, so a new recipe cannot"
+                                + " be checked here"));
+        recipe = clean(req.recipe());
+        RecipeVerifier.Verdict v = lab.verifier().verify(page, new SourceSpec.Recipe(0, recipe));
+        if (!v.accepted()) {
+          // The same rule as for the model: a recipe that does not read the page exactly is not
+          // recorded, whoever wrote it.
+          throw new ResponseStatusException(
+              HttpStatus.UNPROCESSABLE_CONTENT, "the verifier rejected the recipe: " + v.error());
+        }
+        matched = v.matched();
+        expected = v.expected();
+      }
+    }
+    DecisionLog.Decision d =
+        new DecisionLog.Decision(
+            source, snapshot, req.action(), recipe, matched, expected, note, Instant.now());
+    decisions.append(d);
+    return d;
+  }
+
+  @GetMapping("/api/v1/lab")
+  public LabInfo lab() throws IOException {
+    return new LabInfo(
+        Lab.SOURCE,
+        true,
+        key != null,
+        lab.pages(),
+        cases.knownRecipes(Lab.SOURCE),
+        key == null ? List.of() : lab.models());
+  }
+
+  @PostMapping("/api/v1/lab/runs")
+  public Lab.Result run(
+      @RequestHeader(value = "X-Review-Key", required = false) String given,
+      @RequestBody RunRequest req)
+      throws IOException, InterruptedException {
+    if (req == null) {
+      throw bad("empty request");
+    }
+    int chosen =
+        (req.recipeVersion() != null ? 1 : 0)
+            + (req.model() != null ? 1 : 0)
+            + (req.recipe() != null ? 1 : 0);
+    if (chosen != 1) {
+      throw bad("choose exactly one parser: recipeVersion, model or recipe");
+    }
+    Path page = lab.file(req.pageId()).orElseThrow(() -> notFound("no such page"));
+    if (req.recipeVersion() != null) {
+      SourceSpec.Recipe r =
+          cases.knownRecipes(Lab.SOURCE).stream()
+              .filter(k -> k.version() == req.recipeVersion())
+              .findFirst()
+              .orElseThrow(() -> notFound("no such recipe version"));
+      return lab.runRecipe(req.pageId(), page, "recipe", r);
+    }
+    requireKey(given);
+    if (req.model() != null) {
+      SourceSpec.Recipe inUse =
+          sources.find(Lab.SOURCE).map(SourceSpec::recipe).orElseThrow(() -> notFound("no spec"));
+      return lab.runModel(req.pageId(), page, req.model(), inUse);
+    }
+    return lab.runRecipe(
+        req.pageId(), page, "human", new SourceSpec.Recipe(0, clean(req.recipe())));
+  }
+
+  @ExceptionHandler(Lab.Busy.class)
+  @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+  public Map<String, String> busy(Lab.Busy e) {
+    return Map.of("error", e.getMessage());
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Map<String, String> badArgument(IllegalArgumentException e) {
+    return Map.of("error", String.valueOf(e.getMessage()));
+  }
+
+  private Map<String, DecisionLog.Decision> latestDecisions() throws IOException {
+    Map<String, DecisionLog.Decision> latest = new HashMap<>();
+    for (DecisionLog.Decision d : decisions.all()) {
+      latest.put(d.source() + "/" + d.snapshot(), d);
+    }
+    return latest;
+  }
+
+  private void requireKey(String given) {
+    if (key == null) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "reviews are switched off on this server (no review key set)");
+    }
+    if (given == null || !MessageDigest.isEqual(key, given.getBytes(StandardCharsets.UTF_8))) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "wrong or missing review key");
+    }
+  }
+
+  /** Only the recipe keys the extractor knows; blank values dropped. */
+  private static Map<String, String> clean(Map<String, String> recipe) {
+    if (recipe == null) {
+      throw bad("a recipe is required");
+    }
+    Map<String, String> out = new LinkedHashMap<>();
+    for (String k :
+        List.of(
+            "base",
+            "dateSelector",
+            "dateFormat",
+            "dateRegex",
+            "rowSelector",
+            "currencySelector",
+            "rateSelector")) {
+      String v = recipe.get(k);
+      if (v != null && !v.isBlank()) {
+        out.put(k, v.strip());
+      }
+    }
+    out.putIfAbsent("base", "EUR");
+    return out;
+  }
+
+  private static ResponseStatusException notFound(String why) {
+    return new ResponseStatusException(HttpStatus.NOT_FOUND, why);
+  }
+
+  private static ResponseStatusException bad(String why) {
+    return new ResponseStatusException(HttpStatus.BAD_REQUEST, why);
+  }
+}

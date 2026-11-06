@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +26,20 @@ public final class ReferenceTruth {
 
   /** Loads an SDMX CSV evidence file (the history backfill holds every day since 2016). */
   public static ReferenceTruth fromSdmxCsv(Path file) throws ExtractionException {
+    return fromSdmxCsv(List.of(file));
+  }
+
+  /** Loads several SDMX CSV evidence files into one: the history backfill plus later runs. */
+  public static ReferenceTruth fromSdmxCsv(List<Path> files) throws ExtractionException {
     ReferenceTruth truth = new ReferenceTruth();
+    for (Path file : files) {
+      truth.load(file);
+    }
+    return truth;
+  }
+
+  private void load(Path file) throws ExtractionException {
+    ReferenceTruth truth = this;
     SourceSpec spec =
         new SourceSpec(
             "truth",
@@ -56,7 +70,6 @@ public final class ReferenceTruth {
               @Override
               public void quote(ProviderQuoteObserved quote) {}
             });
-    return truth;
   }
 
   /** The rates for one day, by currency; empty if the ECB published none that day. */

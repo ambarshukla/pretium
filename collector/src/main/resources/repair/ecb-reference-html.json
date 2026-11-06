@@ -1,0 +1,1204 @@
+{
+  "source" : "ecb-reference-html",
+  "pageUrl" : "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+  "model" : "qwen2.5-coder:7b",
+  "generatedAt" : "2026-11-06T12:08:21Z",
+  "cases" : [ {
+    "snapshot" : "20210104132920",
+    "archiveUrl" : "https://web.archive.org/web/20210104132920/https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "ratesDate" : "2020-12-31",
+    "outcome" : "HEALED",
+    "before" : {
+      "by" : "recipe",
+      "recipeVersion" : 1,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "div.jumbo-box h3",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.forextable tbody tr",
+        "currencySelector" : "td.currency",
+        "rateSelector" : "span.rate"
+      },
+      "accepted" : false,
+      "error" : "dateSelector 'div.jumbo-box h3' matched nothing",
+      "read" : 0,
+      "expected" : 0,
+      "matched" : 0,
+      "readings" : [ ],
+      "millis" : null,
+      "promptTokens" : null,
+      "outputTokens" : null,
+      "modelReply" : null
+    },
+    "proposals" : [ {
+      "by" : "model",
+      "recipeVersion" : 2,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number a span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : true,
+      "error" : null,
+      "read" : 32,
+      "expected" : 32,
+      "matched" : 32,
+      "readings" : [ {
+        "currency" : "AUD",
+        "read" : 1.5896,
+        "reference" : 1.5896
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : 6.3735,
+        "reference" : 6.3735
+      }, {
+        "currency" : "CAD",
+        "read" : 1.5633,
+        "reference" : 1.5633
+      }, {
+        "currency" : "CHF",
+        "read" : 1.0802,
+        "reference" : 1.0802
+      }, {
+        "currency" : "CNY",
+        "read" : 8.0225,
+        "reference" : 8.0225
+      }, {
+        "currency" : "CZK",
+        "read" : 26.242,
+        "reference" : 26.242
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4409,
+        "reference" : 7.4409
+      }, {
+        "currency" : "GBP",
+        "read" : 0.89903,
+        "reference" : 0.89903
+      }, {
+        "currency" : "HKD",
+        "read" : 9.5142,
+        "reference" : 9.5142
+      }, {
+        "currency" : "HRK",
+        "read" : 7.5519,
+        "reference" : 7.5519
+      }, {
+        "currency" : "HUF",
+        "read" : 363.89,
+        "reference" : 363.89
+      }, {
+        "currency" : "IDR",
+        "read" : 17240.76,
+        "reference" : 17240.76
+      }, {
+        "currency" : "ILS",
+        "read" : 3.9447,
+        "reference" : 3.9447
+      }, {
+        "currency" : "INR",
+        "read" : 89.6605,
+        "reference" : 89.6605
+      }, {
+        "currency" : "ISK",
+        "read" : 156.10,
+        "reference" : 156.1
+      }, {
+        "currency" : "JPY",
+        "read" : 126.49,
+        "reference" : 126.49
+      }, {
+        "currency" : "KRW",
+        "read" : 1336.00,
+        "reference" : 1336
+      }, {
+        "currency" : "MXN",
+        "read" : 24.4160,
+        "reference" : 24.416
+      }, {
+        "currency" : "MYR",
+        "read" : 4.9340,
+        "reference" : 4.934
+      }, {
+        "currency" : "NOK",
+        "read" : 10.4703,
+        "reference" : 10.4703
+      }, {
+        "currency" : "NZD",
+        "read" : 1.6984,
+        "reference" : 1.6984
+      }, {
+        "currency" : "PHP",
+        "read" : 59.125,
+        "reference" : 59.125
+      }, {
+        "currency" : "PLN",
+        "read" : 4.5597,
+        "reference" : 4.5597
+      }, {
+        "currency" : "RON",
+        "read" : 4.8683,
+        "reference" : 4.8683
+      }, {
+        "currency" : "RUB",
+        "read" : 91.4671,
+        "reference" : 91.4671
+      }, {
+        "currency" : "SEK",
+        "read" : 10.0343,
+        "reference" : 10.0343
+      }, {
+        "currency" : "SGD",
+        "read" : 1.6218,
+        "reference" : 1.6218
+      }, {
+        "currency" : "THB",
+        "read" : 36.727,
+        "reference" : 36.727
+      }, {
+        "currency" : "TRY",
+        "read" : 9.1131,
+        "reference" : 9.1131
+      }, {
+        "currency" : "USD",
+        "read" : 1.2271,
+        "reference" : 1.2271
+      }, {
+        "currency" : "ZAR",
+        "read" : 18.0219,
+        "reference" : 18.0219
+      } ],
+      "millis" : 10178,
+      "promptTokens" : 2612,
+      "outputTokens" : 63,
+      "modelReply" : "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+    } ],
+    "after" : {
+      "by" : "model",
+      "recipeVersion" : 2,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number a span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : true,
+      "error" : null,
+      "read" : 32,
+      "expected" : 32,
+      "matched" : 32,
+      "readings" : [ {
+        "currency" : "AUD",
+        "read" : 1.5896,
+        "reference" : 1.5896
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : 6.3735,
+        "reference" : 6.3735
+      }, {
+        "currency" : "CAD",
+        "read" : 1.5633,
+        "reference" : 1.5633
+      }, {
+        "currency" : "CHF",
+        "read" : 1.0802,
+        "reference" : 1.0802
+      }, {
+        "currency" : "CNY",
+        "read" : 8.0225,
+        "reference" : 8.0225
+      }, {
+        "currency" : "CZK",
+        "read" : 26.242,
+        "reference" : 26.242
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4409,
+        "reference" : 7.4409
+      }, {
+        "currency" : "GBP",
+        "read" : 0.89903,
+        "reference" : 0.89903
+      }, {
+        "currency" : "HKD",
+        "read" : 9.5142,
+        "reference" : 9.5142
+      }, {
+        "currency" : "HRK",
+        "read" : 7.5519,
+        "reference" : 7.5519
+      }, {
+        "currency" : "HUF",
+        "read" : 363.89,
+        "reference" : 363.89
+      }, {
+        "currency" : "IDR",
+        "read" : 17240.76,
+        "reference" : 17240.76
+      }, {
+        "currency" : "ILS",
+        "read" : 3.9447,
+        "reference" : 3.9447
+      }, {
+        "currency" : "INR",
+        "read" : 89.6605,
+        "reference" : 89.6605
+      }, {
+        "currency" : "ISK",
+        "read" : 156.10,
+        "reference" : 156.1
+      }, {
+        "currency" : "JPY",
+        "read" : 126.49,
+        "reference" : 126.49
+      }, {
+        "currency" : "KRW",
+        "read" : 1336.00,
+        "reference" : 1336
+      }, {
+        "currency" : "MXN",
+        "read" : 24.4160,
+        "reference" : 24.416
+      }, {
+        "currency" : "MYR",
+        "read" : 4.9340,
+        "reference" : 4.934
+      }, {
+        "currency" : "NOK",
+        "read" : 10.4703,
+        "reference" : 10.4703
+      }, {
+        "currency" : "NZD",
+        "read" : 1.6984,
+        "reference" : 1.6984
+      }, {
+        "currency" : "PHP",
+        "read" : 59.125,
+        "reference" : 59.125
+      }, {
+        "currency" : "PLN",
+        "read" : 4.5597,
+        "reference" : 4.5597
+      }, {
+        "currency" : "RON",
+        "read" : 4.8683,
+        "reference" : 4.8683
+      }, {
+        "currency" : "RUB",
+        "read" : 91.4671,
+        "reference" : 91.4671
+      }, {
+        "currency" : "SEK",
+        "read" : 10.0343,
+        "reference" : 10.0343
+      }, {
+        "currency" : "SGD",
+        "read" : 1.6218,
+        "reference" : 1.6218
+      }, {
+        "currency" : "THB",
+        "read" : 36.727,
+        "reference" : 36.727
+      }, {
+        "currency" : "TRY",
+        "read" : 9.1131,
+        "reference" : 9.1131
+      }, {
+        "currency" : "USD",
+        "read" : 1.2271,
+        "reference" : 1.2271
+      }, {
+        "currency" : "ZAR",
+        "read" : 18.0219,
+        "reference" : 18.0219
+      } ],
+      "millis" : 10178,
+      "promptTokens" : 2612,
+      "outputTokens" : 63,
+      "modelReply" : "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+    }
+  }, {
+    "snapshot" : "20190415031708",
+    "archiveUrl" : "https://web.archive.org/web/20190415031708/https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "ratesDate" : "2019-04-12",
+    "outcome" : "HUMAN_NEEDED",
+    "before" : {
+      "by" : "recipe",
+      "recipeVersion" : 2,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number a span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : false,
+      "error" : "read 13 of 36 currencies",
+      "read" : 13,
+      "expected" : 36,
+      "matched" : 13,
+      "readings" : [ {
+        "currency" : "ARS",
+        "read" : null,
+        "reference" : 48.365
+      }, {
+        "currency" : "AUD",
+        "read" : null,
+        "reference" : 1.5771
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : null,
+        "reference" : 4.3884
+      }, {
+        "currency" : "CAD",
+        "read" : null,
+        "reference" : 1.5082
+      }, {
+        "currency" : "CHF",
+        "read" : 1.1326,
+        "reference" : 1.1326
+      }, {
+        "currency" : "CNY",
+        "read" : null,
+        "reference" : 7.5939
+      }, {
+        "currency" : "CZK",
+        "read" : 25.623,
+        "reference" : 25.623
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4643,
+        "reference" : 7.4643
+      }, {
+        "currency" : "DZD",
+        "read" : null,
+        "reference" : 134.8444
+      }, {
+        "currency" : "GBP",
+        "read" : 0.86290,
+        "reference" : 0.8629
+      }, {
+        "currency" : "HKD",
+        "read" : null,
+        "reference" : 8.8788
+      }, {
+        "currency" : "HRK",
+        "read" : null,
+        "reference" : 7.435
+      }, {
+        "currency" : "HUF",
+        "read" : 321.90,
+        "reference" : 321.9
+      }, {
+        "currency" : "IDR",
+        "read" : null,
+        "reference" : 15954.12
+      }, {
+        "currency" : "ILS",
+        "read" : null,
+        "reference" : 4.0389
+      }, {
+        "currency" : "INR",
+        "read" : null,
+        "reference" : 78.2915
+      }, {
+        "currency" : "ISK",
+        "read" : 135.20,
+        "reference" : 135.2
+      }, {
+        "currency" : "JPY",
+        "read" : 126.76,
+        "reference" : 126.76
+      }, {
+        "currency" : "KRW",
+        "read" : null,
+        "reference" : 1283
+      }, {
+        "currency" : "MAD",
+        "read" : null,
+        "reference" : 10.8589
+      }, {
+        "currency" : "MXN",
+        "read" : null,
+        "reference" : 21.236
+      }, {
+        "currency" : "MYR",
+        "read" : null,
+        "reference" : 4.658
+      }, {
+        "currency" : "NOK",
+        "read" : 9.6020,
+        "reference" : 9.602
+      }, {
+        "currency" : "NZD",
+        "read" : null,
+        "reference" : 1.6748
+      }, {
+        "currency" : "PHP",
+        "read" : null,
+        "reference" : 58.553
+      }, {
+        "currency" : "PLN",
+        "read" : 4.2796,
+        "reference" : 4.2796
+      }, {
+        "currency" : "RON",
+        "read" : 4.7598,
+        "reference" : 4.7598
+      }, {
+        "currency" : "RUB",
+        "read" : null,
+        "reference" : 72.6133
+      }, {
+        "currency" : "SEK",
+        "read" : 10.4788,
+        "reference" : 10.4788
+      }, {
+        "currency" : "SGD",
+        "read" : null,
+        "reference" : 1.5318
+      }, {
+        "currency" : "THB",
+        "read" : null,
+        "reference" : 35.955
+      }, {
+        "currency" : "TRY",
+        "read" : null,
+        "reference" : 6.535
+      }, {
+        "currency" : "TWD",
+        "read" : null,
+        "reference" : 34.9155
+      }, {
+        "currency" : "USD",
+        "read" : 1.1321,
+        "reference" : 1.1321
+      }, {
+        "currency" : "ZAR",
+        "read" : null,
+        "reference" : 15.7631
+      } ],
+      "millis" : null,
+      "promptTokens" : null,
+      "outputTokens" : null,
+      "modelReply" : null
+    },
+    "proposals" : [ {
+      "by" : "model",
+      "recipeVersion" : 3,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : false,
+      "error" : "read 13 of 36 currencies",
+      "read" : 13,
+      "expected" : 36,
+      "matched" : 13,
+      "readings" : [ {
+        "currency" : "ARS",
+        "read" : null,
+        "reference" : 48.365
+      }, {
+        "currency" : "AUD",
+        "read" : null,
+        "reference" : 1.5771
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : null,
+        "reference" : 4.3884
+      }, {
+        "currency" : "CAD",
+        "read" : null,
+        "reference" : 1.5082
+      }, {
+        "currency" : "CHF",
+        "read" : 1.1326,
+        "reference" : 1.1326
+      }, {
+        "currency" : "CNY",
+        "read" : null,
+        "reference" : 7.5939
+      }, {
+        "currency" : "CZK",
+        "read" : 25.623,
+        "reference" : 25.623
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4643,
+        "reference" : 7.4643
+      }, {
+        "currency" : "DZD",
+        "read" : null,
+        "reference" : 134.8444
+      }, {
+        "currency" : "GBP",
+        "read" : 0.86290,
+        "reference" : 0.8629
+      }, {
+        "currency" : "HKD",
+        "read" : null,
+        "reference" : 8.8788
+      }, {
+        "currency" : "HRK",
+        "read" : null,
+        "reference" : 7.435
+      }, {
+        "currency" : "HUF",
+        "read" : 321.90,
+        "reference" : 321.9
+      }, {
+        "currency" : "IDR",
+        "read" : null,
+        "reference" : 15954.12
+      }, {
+        "currency" : "ILS",
+        "read" : null,
+        "reference" : 4.0389
+      }, {
+        "currency" : "INR",
+        "read" : null,
+        "reference" : 78.2915
+      }, {
+        "currency" : "ISK",
+        "read" : 135.20,
+        "reference" : 135.2
+      }, {
+        "currency" : "JPY",
+        "read" : 126.76,
+        "reference" : 126.76
+      }, {
+        "currency" : "KRW",
+        "read" : null,
+        "reference" : 1283
+      }, {
+        "currency" : "MAD",
+        "read" : null,
+        "reference" : 10.8589
+      }, {
+        "currency" : "MXN",
+        "read" : null,
+        "reference" : 21.236
+      }, {
+        "currency" : "MYR",
+        "read" : null,
+        "reference" : 4.658
+      }, {
+        "currency" : "NOK",
+        "read" : 9.6020,
+        "reference" : 9.602
+      }, {
+        "currency" : "NZD",
+        "read" : null,
+        "reference" : 1.6748
+      }, {
+        "currency" : "PHP",
+        "read" : null,
+        "reference" : 58.553
+      }, {
+        "currency" : "PLN",
+        "read" : 4.2796,
+        "reference" : 4.2796
+      }, {
+        "currency" : "RON",
+        "read" : 4.7598,
+        "reference" : 4.7598
+      }, {
+        "currency" : "RUB",
+        "read" : null,
+        "reference" : 72.6133
+      }, {
+        "currency" : "SEK",
+        "read" : 10.4788,
+        "reference" : 10.4788
+      }, {
+        "currency" : "SGD",
+        "read" : null,
+        "reference" : 1.5318
+      }, {
+        "currency" : "THB",
+        "read" : null,
+        "reference" : 35.955
+      }, {
+        "currency" : "TRY",
+        "read" : null,
+        "reference" : 6.535
+      }, {
+        "currency" : "TWD",
+        "read" : null,
+        "reference" : 34.9155
+      }, {
+        "currency" : "USD",
+        "read" : 1.1321,
+        "reference" : 1.1321
+      }, {
+        "currency" : "ZAR",
+        "read" : null,
+        "reference" : 15.7631
+      } ],
+      "millis" : 10836,
+      "promptTokens" : 2587,
+      "outputTokens" : 68,
+      "modelReply" : "{\n  \"dateSelector\": \"h2\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+    }, {
+      "by" : "model",
+      "recipeVersion" : 3,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : false,
+      "error" : "read 13 of 36 currencies",
+      "read" : 13,
+      "expected" : 36,
+      "matched" : 13,
+      "readings" : [ {
+        "currency" : "ARS",
+        "read" : null,
+        "reference" : 48.365
+      }, {
+        "currency" : "AUD",
+        "read" : null,
+        "reference" : 1.5771
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : null,
+        "reference" : 4.3884
+      }, {
+        "currency" : "CAD",
+        "read" : null,
+        "reference" : 1.5082
+      }, {
+        "currency" : "CHF",
+        "read" : 1.1326,
+        "reference" : 1.1326
+      }, {
+        "currency" : "CNY",
+        "read" : null,
+        "reference" : 7.5939
+      }, {
+        "currency" : "CZK",
+        "read" : 25.623,
+        "reference" : 25.623
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4643,
+        "reference" : 7.4643
+      }, {
+        "currency" : "DZD",
+        "read" : null,
+        "reference" : 134.8444
+      }, {
+        "currency" : "GBP",
+        "read" : 0.86290,
+        "reference" : 0.8629
+      }, {
+        "currency" : "HKD",
+        "read" : null,
+        "reference" : 8.8788
+      }, {
+        "currency" : "HRK",
+        "read" : null,
+        "reference" : 7.435
+      }, {
+        "currency" : "HUF",
+        "read" : 321.90,
+        "reference" : 321.9
+      }, {
+        "currency" : "IDR",
+        "read" : null,
+        "reference" : 15954.12
+      }, {
+        "currency" : "ILS",
+        "read" : null,
+        "reference" : 4.0389
+      }, {
+        "currency" : "INR",
+        "read" : null,
+        "reference" : 78.2915
+      }, {
+        "currency" : "ISK",
+        "read" : 135.20,
+        "reference" : 135.2
+      }, {
+        "currency" : "JPY",
+        "read" : 126.76,
+        "reference" : 126.76
+      }, {
+        "currency" : "KRW",
+        "read" : null,
+        "reference" : 1283
+      }, {
+        "currency" : "MAD",
+        "read" : null,
+        "reference" : 10.8589
+      }, {
+        "currency" : "MXN",
+        "read" : null,
+        "reference" : 21.236
+      }, {
+        "currency" : "MYR",
+        "read" : null,
+        "reference" : 4.658
+      }, {
+        "currency" : "NOK",
+        "read" : 9.6020,
+        "reference" : 9.602
+      }, {
+        "currency" : "NZD",
+        "read" : null,
+        "reference" : 1.6748
+      }, {
+        "currency" : "PHP",
+        "read" : null,
+        "reference" : 58.553
+      }, {
+        "currency" : "PLN",
+        "read" : 4.2796,
+        "reference" : 4.2796
+      }, {
+        "currency" : "RON",
+        "read" : 4.7598,
+        "reference" : 4.7598
+      }, {
+        "currency" : "RUB",
+        "read" : null,
+        "reference" : 72.6133
+      }, {
+        "currency" : "SEK",
+        "read" : 10.4788,
+        "reference" : 10.4788
+      }, {
+        "currency" : "SGD",
+        "read" : null,
+        "reference" : 1.5318
+      }, {
+        "currency" : "THB",
+        "read" : null,
+        "reference" : 35.955
+      }, {
+        "currency" : "TRY",
+        "read" : null,
+        "reference" : 6.535
+      }, {
+        "currency" : "TWD",
+        "read" : null,
+        "reference" : 34.9155
+      }, {
+        "currency" : "USD",
+        "read" : 1.1321,
+        "reference" : 1.1321
+      }, {
+        "currency" : "ZAR",
+        "read" : null,
+        "reference" : 15.7631
+      } ],
+      "millis" : 11247,
+      "promptTokens" : 2659,
+      "outputTokens" : 68,
+      "modelReply" : "{\n  \"dateSelector\": \"h2\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+    } ],
+    "after" : null
+  }, {
+    "snapshot" : "20190104184201",
+    "archiveUrl" : "https://web.archive.org/web/20190104184201/https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "ratesDate" : "2019-01-04",
+    "outcome" : "HEALED",
+    "before" : {
+      "by" : "recipe",
+      "recipeVersion" : 2,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "h2",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number a span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : false,
+      "error" : "dateRegex '(\\d{1,2} [A-Za-z]+ \\d{4})' found no date group in 'Our website uses cookies'",
+      "read" : 0,
+      "expected" : 0,
+      "matched" : 0,
+      "readings" : [ ],
+      "millis" : null,
+      "promptTokens" : null,
+      "outputTokens" : null,
+      "modelReply" : null
+    },
+    "proposals" : [ {
+      "by" : "model",
+      "recipeVersion" : 3,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "#ecb-content-col > main > h2:nth-child(3)",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : true,
+      "error" : null,
+      "read" : 32,
+      "expected" : 36,
+      "matched" : 32,
+      "readings" : [ {
+        "currency" : "ARS",
+        "read" : null,
+        "reference" : 43.0463
+      }, {
+        "currency" : "AUD",
+        "read" : 1.6189,
+        "reference" : 1.6189
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : 4.2889,
+        "reference" : 4.2889
+      }, {
+        "currency" : "CAD",
+        "read" : 1.5328,
+        "reference" : 1.5328
+      }, {
+        "currency" : "CHF",
+        "read" : 1.1256,
+        "reference" : 1.1256
+      }, {
+        "currency" : "CNY",
+        "read" : 7.8280,
+        "reference" : 7.828
+      }, {
+        "currency" : "CZK",
+        "read" : 25.653,
+        "reference" : 25.653
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4679,
+        "reference" : 7.4679
+      }, {
+        "currency" : "DZD",
+        "read" : null,
+        "reference" : 135.0789
+      }, {
+        "currency" : "GBP",
+        "read" : 0.89988,
+        "reference" : 0.89988
+      }, {
+        "currency" : "HKD",
+        "read" : 8.9325,
+        "reference" : 8.9325
+      }, {
+        "currency" : "HRK",
+        "read" : 7.4335,
+        "reference" : 7.4335
+      }, {
+        "currency" : "HUF",
+        "read" : 321.45,
+        "reference" : 321.45
+      }, {
+        "currency" : "IDR",
+        "read" : 16241.35,
+        "reference" : 16241.35
+      }, {
+        "currency" : "ILS",
+        "read" : 4.2320,
+        "reference" : 4.232
+      }, {
+        "currency" : "INR",
+        "read" : 79.4315,
+        "reference" : 79.4315
+      }, {
+        "currency" : "ISK",
+        "read" : 134.00,
+        "reference" : 134
+      }, {
+        "currency" : "JPY",
+        "read" : 123.20,
+        "reference" : 123.2
+      }, {
+        "currency" : "KRW",
+        "read" : 1279.13,
+        "reference" : 1279.13
+      }, {
+        "currency" : "MAD",
+        "read" : null,
+        "reference" : 10.8567
+      }, {
+        "currency" : "MXN",
+        "read" : 22.3080,
+        "reference" : 22.308
+      }, {
+        "currency" : "MYR",
+        "read" : 4.7106,
+        "reference" : 4.7106
+      }, {
+        "currency" : "NOK",
+        "read" : 9.8648,
+        "reference" : 9.8648
+      }, {
+        "currency" : "NZD",
+        "read" : 1.7045,
+        "reference" : 1.7045
+      }, {
+        "currency" : "PHP",
+        "read" : 59.809,
+        "reference" : 59.809
+      }, {
+        "currency" : "PLN",
+        "read" : 4.2957,
+        "reference" : 4.2957
+      }, {
+        "currency" : "RON",
+        "read" : 4.6656,
+        "reference" : 4.6656
+      }, {
+        "currency" : "RUB",
+        "read" : 77.6790,
+        "reference" : 77.679
+      }, {
+        "currency" : "SEK",
+        "read" : 10.2460,
+        "reference" : 10.246
+      }, {
+        "currency" : "SGD",
+        "read" : 1.5525,
+        "reference" : 1.5525
+      }, {
+        "currency" : "THB",
+        "read" : 36.587,
+        "reference" : 36.587
+      }, {
+        "currency" : "TRY",
+        "read" : 6.1707,
+        "reference" : 6.1707
+      }, {
+        "currency" : "TWD",
+        "read" : null,
+        "reference" : 35.2011
+      }, {
+        "currency" : "USD",
+        "read" : 1.1403,
+        "reference" : 1.1403
+      }, {
+        "currency" : "ZAR",
+        "read" : 16.1175,
+        "reference" : 16.1175
+      } ],
+      "millis" : 10444,
+      "promptTokens" : 2658,
+      "outputTokens" : 62,
+      "modelReply" : "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+    } ],
+    "after" : {
+      "by" : "model",
+      "recipeVersion" : 3,
+      "recipe" : {
+        "base" : "EUR",
+        "dateSelector" : "#ecb-content-col > main > h2:nth-child(3)",
+        "dateFormat" : "d MMMM yyyy",
+        "rowSelector" : "table.ecb-forexTable tbody tr",
+        "currencySelector" : "td.currency a",
+        "rateSelector" : "td.spot.number span.rate",
+        "dateRegex" : "(\\d{1,2} [A-Za-z]+ \\d{4})"
+      },
+      "accepted" : true,
+      "error" : null,
+      "read" : 32,
+      "expected" : 36,
+      "matched" : 32,
+      "readings" : [ {
+        "currency" : "ARS",
+        "read" : null,
+        "reference" : 43.0463
+      }, {
+        "currency" : "AUD",
+        "read" : 1.6189,
+        "reference" : 1.6189
+      }, {
+        "currency" : "BGN",
+        "read" : 1.9558,
+        "reference" : 1.9558
+      }, {
+        "currency" : "BRL",
+        "read" : 4.2889,
+        "reference" : 4.2889
+      }, {
+        "currency" : "CAD",
+        "read" : 1.5328,
+        "reference" : 1.5328
+      }, {
+        "currency" : "CHF",
+        "read" : 1.1256,
+        "reference" : 1.1256
+      }, {
+        "currency" : "CNY",
+        "read" : 7.8280,
+        "reference" : 7.828
+      }, {
+        "currency" : "CZK",
+        "read" : 25.653,
+        "reference" : 25.653
+      }, {
+        "currency" : "DKK",
+        "read" : 7.4679,
+        "reference" : 7.4679
+      }, {
+        "currency" : "DZD",
+        "read" : null,
+        "reference" : 135.0789
+      }, {
+        "currency" : "GBP",
+        "read" : 0.89988,
+        "reference" : 0.89988
+      }, {
+        "currency" : "HKD",
+        "read" : 8.9325,
+        "reference" : 8.9325
+      }, {
+        "currency" : "HRK",
+        "read" : 7.4335,
+        "reference" : 7.4335
+      }, {
+        "currency" : "HUF",
+        "read" : 321.45,
+        "reference" : 321.45
+      }, {
+        "currency" : "IDR",
+        "read" : 16241.35,
+        "reference" : 16241.35
+      }, {
+        "currency" : "ILS",
+        "read" : 4.2320,
+        "reference" : 4.232
+      }, {
+        "currency" : "INR",
+        "read" : 79.4315,
+        "reference" : 79.4315
+      }, {
+        "currency" : "ISK",
+        "read" : 134.00,
+        "reference" : 134
+      }, {
+        "currency" : "JPY",
+        "read" : 123.20,
+        "reference" : 123.2
+      }, {
+        "currency" : "KRW",
+        "read" : 1279.13,
+        "reference" : 1279.13
+      }, {
+        "currency" : "MAD",
+        "read" : null,
+        "reference" : 10.8567
+      }, {
+        "currency" : "MXN",
+        "read" : 22.3080,
+        "reference" : 22.308
+      }, {
+        "currency" : "MYR",
+        "read" : 4.7106,
+        "reference" : 4.7106
+      }, {
+        "currency" : "NOK",
+        "read" : 9.8648,
+        "reference" : 9.8648
+      }, {
+        "currency" : "NZD",
+        "read" : 1.7045,
+        "reference" : 1.7045
+      }, {
+        "currency" : "PHP",
+        "read" : 59.809,
+        "reference" : 59.809
+      }, {
+        "currency" : "PLN",
+        "read" : 4.2957,
+        "reference" : 4.2957
+      }, {
+        "currency" : "RON",
+        "read" : 4.6656,
+        "reference" : 4.6656
+      }, {
+        "currency" : "RUB",
+        "read" : 77.6790,
+        "reference" : 77.679
+      }, {
+        "currency" : "SEK",
+        "read" : 10.2460,
+        "reference" : 10.246
+      }, {
+        "currency" : "SGD",
+        "read" : 1.5525,
+        "reference" : 1.5525
+      }, {
+        "currency" : "THB",
+        "read" : 36.587,
+        "reference" : 36.587
+      }, {
+        "currency" : "TRY",
+        "read" : 6.1707,
+        "reference" : 6.1707
+      }, {
+        "currency" : "TWD",
+        "read" : null,
+        "reference" : 35.2011
+      }, {
+        "currency" : "USD",
+        "read" : 1.1403,
+        "reference" : 1.1403
+      }, {
+        "currency" : "ZAR",
+        "read" : 16.1175,
+        "reference" : 16.1175
+      } ],
+      "millis" : 10444,
+      "promptTokens" : 2658,
+      "outputTokens" : 62,
+      "modelReply" : "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+    }
+  } ]
+}

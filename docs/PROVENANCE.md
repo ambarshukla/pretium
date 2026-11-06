@@ -95,6 +95,18 @@ evaluation replays (Internet Archive snapshots, downloaded with the archive's un
 removed and nothing loaded from elsewhere, credited "Source: ECB" with a link to each copy
 at the Internet Archive.
 
+`collector/src/main/resources/bench/ecb-reference-html.json` is the model comparison written by
+`ModelBench` over a sample of the same archived pages: for each page and model, the selectors
+proposed, the rates the model typed when asked to read them directly, and how each compares with
+the ECB's rate for the day, with the replies exactly as they came back. Rates are Source: ECB.
+
+`wb-rpw-2025q3-three-rows.rows.tsv` holds the header and three rows of the World Bank file
+collected on 4 November 2026 (`rpw_dataset_2011_2025_q3.xlsx`, sheet "Dataset (from Q2 2016)"),
+cell text verbatim, in the tab-separated form the price-proof index writes. The deployed
+server writes the same form for the whole file next to its stored copy; it is a reading aid
+and is rebuilt from the original whenever it is missing. Source: The World Bank, Remittance
+Prices Worldwide (CC BY 4.0).
+
 `wb-ddh-dataset-0037898.json` is an excerpt of the World Bank data catalogue's entry for the
 dataset, captured on 5 November 2026: the identifying fields and the `resources` list,
 verbatim (the description, keywords and contact fields are left out).

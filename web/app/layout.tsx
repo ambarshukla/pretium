@@ -17,10 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             pretium
           </Link>
           <nav>
+            <Link href="/tour">Tour</Link>
             <Link href="/">Compare</Link>
             <Link href="/ops">Operations</Link>
             <Link href="/repairs">Repairs</Link>
             <Link href="/lab">Lab</Link>
+            <Link href="/models">Models</Link>
             <Link href="/about">Method &amp; sources</Link>
           </nav>
         </header>

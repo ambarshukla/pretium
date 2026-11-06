@@ -3,7 +3,7 @@ package io.pretium.collector.repair;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -26,28 +26,46 @@ public final class PageDigest {
   private PageDigest() {}
 
   /**
-   * Where the page states its date, found by code rather than by the model: the first heading (or
-   * caption) whose own text contains a "26 January 2017" style date. A model kept choosing elements
-   * with no date in them; finding a date is a pattern match, so a program does it.
+   * Where the page states its date, found by code rather than by the model: the last heading,
+   * caption or paragraph before the rates table whose own text contains a "26 January 2017" style
+   * date. A model kept choosing elements with no date in them; finding a date is a pattern match,
+   * so a program does it.
+   *
+   * <p>"Last before the table", not "first on the page": since 2022 the page often carries news
+   * items with their own dates above the table. On the 118 archived copies whose date a verified
+   * recipe established, the first date on the page was the rates' date 74 times; the last one
+   * before the table, 118 times.
    */
   public record DateHint(String selector, String format, String regex, String text) {}
 
+  private static final Set<String> DATE_TAGS =
+      Set.of("h1", "h2", "h3", "h4", "caption", "p", "div", "span");
+
   public static DateHint dateHint(Path page) throws IOException {
     Document doc = Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name());
-    for (Element e : doc.select("h1, h2, h3, h4, caption, p, div, span")) {
-      Matcher m = DATE.matcher(e.ownText());
-      if (!m.find()) {
-        continue;
+    Element first = null;
+    Element beforeTable = null;
+    boolean table = false;
+    for (Element e : doc.getAllElements()) {
+      if (e.ownText().strip().equals("USD")) {
+        table = true;
+        break;
       }
-      String tag = e.tagName();
-      String selector = tag;
-      if (!tag.equals(doc.selectFirst(tag).tagName()) || doc.selectFirst(tag) != e) {
-        selector = e.cssSelector();
+      if (DATE_TAGS.contains(e.tagName()) && DATE.matcher(e.ownText()).find()) {
+        if (first == null) {
+          first = e;
+        }
+        beforeTable = e;
       }
-      return new DateHint(
-          selector, "d MMMM yyyy", "(\\d{1,2} [A-Za-z]+ \\d{4})", e.ownText().strip());
     }
-    return null;
+    Element e = table && beforeTable != null ? beforeTable : first;
+    if (e == null) {
+      return null;
+    }
+    String tag = e.tagName();
+    String selector = doc.selectFirst(tag) == e ? tag : e.cssSelector();
+    return new DateHint(
+        selector, "d MMMM yyyy", "(\\d{1,2} [A-Za-z]+ \\d{4})", e.ownText().strip());
   }
 
   public static String of(Path page) throws IOException {

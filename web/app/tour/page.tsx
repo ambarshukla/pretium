@@ -122,7 +122,7 @@ const STEPS: Step[] = [
     link: "Models compared",
     what: (
       <>
-        Three model sizes, the same pages, both approaches: repair the parser, or read the rates directly. Every
+        Two model sizes, the same pages, both approaches: repair the parser, or read the rates directly. Every
         number is checked against the ECB&apos;s feed.
       </>
     ),

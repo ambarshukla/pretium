@@ -266,3 +266,31 @@ readings are the same as before; one reply differed only in the date keys, which
 overwrites. Through the lab locally, `qwen2.5-coder:7b` proposed a recipe for the January
 2019 page in 66 s that read 32 of the 36 rates the ECB's feed has for that day, all exactly, and
 was accepted.
+
+## 2026-11-06 · Fix the parser, or read the numbers? Measured
+
+`ModelBench` runs two uses of a model on the same 8 archived copies of the ECB page (one
+every 15, 2017 to 2025), with the same 6,000-character digest: propose selectors from a
+recipe that fails there (one try, verified), or read every rate and the date directly.
+Every number is scored against the SDMX feed for the page's true date.
+
+| Model | Repaired, first try | Wrong numbers published by repair | Read directly: exact | Read directly: wrong or made up | Dates right |
+|---|---|---|---|---|---|
+| `qwen2.5-coder:3b` | 6 of 8 | 0 | 107 | 34 | 2 of 8 |
+| `qwen2.5-coder:7b` | 8 of 8 | 0 | 120 | 2 | 4 of 8 |
+
+The digest holds 15 or 16 of the 30 to 36 currencies. Selectors found in it still read the
+whole table on the full page; a model reading directly can only type what it saw, and on the
+January 2017 page the 3B model typed 28 rates it could not see, all wrong. On the four pages
+before 2022 the date is not in the digest at all; both models gave one anyway (the 7B model
+said 14 April 2023 every time). The 3B model's two failed repairs dropped a dot from a class
+selector (`td.spot number`), which matched nothing: visible, and harmless.
+
+The first run also found a bug, not in the models: the program that finds the date for a
+repair took the first date on the page, which since 2022 is often a news item's. On three
+pages both models' table selectors were right and the rates were read under the wrong day; the
+verifier rejected them as wrong numbers. Fixed (the last date before the table: right on 118 of
+118 verified pages, against 74), and those three pages re-run.
+
+Not done: the 14B model and a run that shows the direct reading the whole table instead of the
+digest. Started, but a 9 GB model next to the rest of the stack ran the laptop out of memory.

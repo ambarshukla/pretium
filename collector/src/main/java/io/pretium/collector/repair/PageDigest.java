@@ -92,6 +92,29 @@ public final class PageDigest {
     return trim(container.outerHtml());
   }
 
+  /**
+   * The whole rates table, for a model asked to read every rate itself: the page's date heading,
+   * then the table's markup with attributes removed (they are most of its size and carry no
+   * values). Not cut to a length. Null if there is no table around a cell that says USD.
+   */
+  public static String table(Path page) throws IOException {
+    Document doc = Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name());
+    Element usd =
+        doc.getAllElements().stream()
+            .filter(e -> e.ownText().strip().equals("USD"))
+            .findFirst()
+            .orElse(null);
+    Element table = usd == null ? null : usd.closest("table");
+    if (table == null) {
+      return null;
+    }
+    for (Element e : table.getAllElements()) {
+      e.clearAttributes();
+    }
+    DateHint date = dateHint(page);
+    return (date == null ? "" : date.text() + "\n") + table.outerHtml().replaceAll("\\s+", " ");
+  }
+
   private static String trim(String html) {
     String compact = html.replaceAll("\\s+", " ");
     return compact.length() <= MAX_CHARS ? compact : compact.substring(0, MAX_CHARS) + " ...";

@@ -1,0 +1,731 @@
+{
+  "source": "ecb-reference-html",
+  "generatedAt": "2026-11-06T17:25:47Z",
+  "method": "every 15th archived page; one repair proposal and one extraction per page and model; temperature 0; same digest for both",
+  "snapshots": [
+    "20170126215331",
+    "20180402010440",
+    "20190716101746",
+    "20201004211312",
+    "20220102132511",
+    "20230401051832",
+    "20240706004405",
+    "20251001081955"
+  ],
+  "models": [
+    {
+      "model": "qwen2.5-coder:3b",
+      "pages": [
+        {
+          "snapshot": "20170126215331",
+          "ratesDate": "2017-01-26",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 31,
+            "expected": 35,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "#navstats > div.ecb-mainnavFlyout > div.ecb-flyoutImgBox.floatRight > p.ecb-small",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency",
+              "rateSelector": "span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 39526,
+            "promptTokens": 2611,
+            "outputTokens": 67,
+            "reply": "{\n  \"dateSelector\": \"div.jumbo-box h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency\",\n  \"rateSelector\": \"span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-10-01",
+            "exact": 2,
+            "wrong": 28,
+            "invented": 3,
+            "missing": 0,
+            "mistakes": [
+              "USD 1.30176 (reference 1.07)",
+              "JPY 124.0161 (reference 122.4)",
+              "CZK 28.9012 (reference 27.021)",
+              "DKK 7.9013 (reference 7.4367)",
+              "GBP 0.8901 (reference 0.85143)",
+              "HUF 32.0156 (reference 310.98)",
+              "PLN 4.50168 (reference 4.3435)",
+              "RON 4.60170 (reference 4.4943)",
+              "SEK 9.50172 (reference 9.466)",
+              "CHF 1.5678 (reference 1.0693)",
+              "NOK 9.0165 (reference 8.9215)",
+              "RUB 65.0171 (reference 64.7269)",
+              "TRY 4.20175 (reference 4.1361)",
+              "AUD 1.3456 (reference 1.4205)",
+              "CAD 1.4567 (reference 1.4048)",
+              "CNY 6.7890 (reference 7.3634)",
+              "EUR 1.0000 (reference: none)",
+              "HKD 7.9014 (reference 8.3006)",
+              "IDR 14.0157 (reference 14315.67)",
+              "ILS 3.9018 (reference 4.0527)",
+              "INR 79.0159 (reference 72.957)",
+              "ISK 14.0160 (reference: none)",
+              "KRW 125.0162 (reference 1248.14)",
+              "MXN 20.0163 (reference 22.476)",
+              "MYR 4.0164 (reference 4.739)",
+              "NZD 1.10166 (reference 1.4793)",
+              "PHP 50.0167 (reference 53.373)",
+              "QAR 3.0169 (reference: none)",
+              "SGD 1.20173 (reference 1.5228)",
+              "THB 30.0174 (reference 37.776)",
+              "ZAR 15.0177 (reference 14.3102)"
+            ],
+            "millis": 88175,
+            "promptTokens": 2365,
+            "outputTokens": 636,
+            "reply": "{\n  \"date\": \"2023-10-01\",\n  \"rates\": {\n    \"USD\": \"1.0700\",\n    \"JPY\": \"122.40\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"27.021\",\n    \"DKK\": \"7.4367\",\n    \"GBP\": \"0.85143\",\n    \"HUF\": \"310.98\",\n    \"PLN\": \"4.3435\",\n    \"RON\": \"4.4943\",\n    \"SEK\": \"9.4660\",\n    \"CHF\": \"1.0693\",\n    \"NOK\": \"8.9215\",\n    \"HRK\": \"7.4800\",\n    \"RUB\": \"64.7269\",\n    \"TRY\": \"4.1361\",\n    \"AUD\": \"1.3456\",\n    \"CAD\": \"1.4567\",\n    \"CHF\": \"1.5678\",\n    \"CNY\": \"6.7890\",\n    \"CZK\": \"28.9012\",\n    \"DKK\": \"7.9013\",\n    \"EUR\": \"1.0000\",\n    \"GBP\": \"0.8901\",\n    \"HKD\": \"7.9014\",\n    \"HUF\": \"32.0156\",\n    \"IDR\": \"14.0157\",\n    \"ILS\": \"3.9018\",\n    \"INR\": \"79.0159\",\n    \"ISK\": \"14.0160\",\n    \"JPY\": \"124.0161\",\n    \"KRW\": \"125.0162\",\n    \"MXN\": \"20.0163\",\n    \"MYR\": \"4.0164\",\n    \"NOK\": \"9.0165\",\n    \"NZD\": \"1.10166\",\n    \"PHP\": \"50.0167\",\n    \"PLN\": \"4.50168\",\n    \"QAR\": \"3.0169\",\n    \"RON\": \"4.60170\",\n    \"RUB\": \"65.0171\",\n    \"SEK\": \"9.50172\",\n    \"SGD\": \"1.20173\",\n    \"THB\": \"30.0174\",\n    \"TRY\": \"4.20175\",\n    \"USD\": \"1.30176\",\n    \"ZAR\": \"15.0177\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20180402010440",
+          "ratesDate": "2018-03-29",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": false,
+            "matched": 0,
+            "expected": 0,
+            "wrong": 0,
+            "error": "32 rows matched 'table.ecb-forexTable tbody tr' but none contained both 'td.currency' and 'td.spot number span.rate'",
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency",
+              "rateSelector": "td.spot number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 44123,
+            "promptTokens": 2612,
+            "outputTokens": 70,
+            "reply": "{\n  \"dateSelector\": \"div.forextable caption\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency\",\n  \"rateSelector\": \"td.spot number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-10-01",
+            "exact": 15,
+            "wrong": 1,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [
+              "TRY 5.0000 (reference 4.8976)"
+            ],
+            "millis": 52124,
+            "promptTokens": 2366,
+            "outputTokens": 233,
+            "reply": "{\n  \"date\": \"2023-10-01\",\n  \"rates\": {\n    \"USD\": \"1.2321\",\n    \"JPY\": \"131.15\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.425\",\n    \"DKK\": \"7.4530\",\n    \"GBP\": \"0.87490\",\n    \"HUF\": \"312.13\",\n    \"PLN\": \"4.2106\",\n    \"RON\": \"4.6565\",\n    \"SEK\": \"10.2843\",\n    \"CHF\": \"1.1779\",\n    \"ISK\": \"121.50\",\n    \"NOK\": \"9.6770\",\n    \"HRK\": \"7.4323\",\n    \"RUB\": \"70.8897\",\n    \"TRY\": \"5.0000\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20190716101746",
+          "ratesDate": "2019-07-15",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 36,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency",
+              "rateSelector": "span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 42396,
+            "promptTokens": 2611,
+            "outputTokens": 67,
+            "reply": "{\n  \"dateSelector\": \"div.jumbo-box h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency\",\n  \"rateSelector\": \"span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-10-01",
+            "exact": 15,
+            "wrong": 1,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [
+              "TRY 1.2345 (reference 6.4258)"
+            ],
+            "millis": 51895,
+            "promptTokens": 2365,
+            "outputTokens": 233,
+            "reply": "{\n  \"date\": \"2023-10-01\",\n  \"rates\": {\n    \"USD\": \"1.1269\",\n    \"JPY\": \"121.62\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.569\",\n    \"DKK\": \"7.4669\",\n    \"GBP\": \"0.89873\",\n    \"HUF\": \"325.66\",\n    \"PLN\": \"4.2622\",\n    \"RON\": \"4.7333\",\n    \"SEK\": \"10.5563\",\n    \"CHF\": \"1.1071\",\n    \"ISK\": \"141.70\",\n    \"NOK\": \"9.6223\",\n    \"HRK\": \"7.3935\",\n    \"RUB\": \"70.5998\",\n    \"TRY\": \"1.2345\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20201004211312",
+          "ratesDate": "2020-10-02",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": false,
+            "matched": 0,
+            "expected": 0,
+            "wrong": 0,
+            "error": "32 rows matched 'table.ecb-forexTable tbody tr' but none contained both 'td.currency' and 'td.spot number span.rate'",
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency",
+              "rateSelector": "td.spot number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 40831,
+            "promptTokens": 2612,
+            "outputTokens": 70,
+            "reply": "{\n  \"dateSelector\": \"div.forextable caption\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency\",\n  \"rateSelector\": \"td.spot number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-10-01",
+            "exact": 15,
+            "wrong": 1,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [
+              "TRY 1.2345 (reference 9.0787)"
+            ],
+            "millis": 51106,
+            "promptTokens": 2366,
+            "outputTokens": 234,
+            "reply": "{\n  \"date\": \"2023-10-01\",\n  \"rates\": {\n    \"USD\": \"1.1730\",\n    \"JPY\": \"123.40\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"27.020\",\n    \"DKK\": \"7.4414\",\n    \"GBP\": \"0.90673\",\n    \"HUF\": \"358.88\",\n    \"PLN\": \"4.4944\",\n    \"RON\": \"4.8715\",\n    \"SEK\": \"10.4250\",\n    \"CHF\": \"1.0790\",\n    \"ISK\": \"162.20\",\n    \"NOK\": \"10.9040\",\n    \"HRK\": \"7.5620\",\n    \"RUB\": \"92.0825\",\n    \"TRY\": \"1.2345\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20220102132511",
+          "ratesDate": "2021-12-31",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 32,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": ".forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 41878,
+            "promptTokens": 2653,
+            "outputTokens": 68,
+            "reply": "{\n  \"dateSelector\": \".jumbo-box h3\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \".forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2021-12-31",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 49185,
+            "promptTokens": 2364,
+            "outputTokens": 221,
+            "reply": "{\n  \"date\": \"2021-12-31\",\n  \"rates\": {\n    \"USD\": \"1.1326\",\n    \"JPY\": \"130.38\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"24.858\",\n    \"DKK\": \"7.4364\",\n    \"GBP\": \"0.84028\",\n    \"HUF\": \"369.19\",\n    \"PLN\": \"4.5969\",\n    \"RON\": \"4.9490\",\n    \"SEK\": \"10.2503\",\n    \"CHF\": \"1.0331\",\n    \"ISK\": \"147.60\",\n    \"NOK\": \"9.9888\",\n    \"HRK\": \"7.5156\",\n    \"RUB\": \"85.3004\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20230401051832",
+          "ratesDate": "2023-03-31",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": ".forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 39617,
+            "promptTokens": 2648,
+            "outputTokens": 68,
+            "reply": "{\n  \"dateSelector\": \".jumbo-box h3\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \".forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": false,
+            "dateRead": "31 March 2023",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 47068,
+            "promptTokens": 2359,
+            "outputTokens": 218,
+            "reply": "{\n  \"date\": \"31 March 2023\",\n  \"rates\": {\n    \"USD\": \"1.0875\",\n    \"JPY\": \"144.83\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"23.492\",\n    \"DKK\": \"7.4485\",\n    \"GBP\": \"0.87920\",\n    \"HUF\": \"379.50\",\n    \"PLN\": \"4.6700\",\n    \"RON\": \"4.9490\",\n    \"SEK\": \"11.2805\",\n    \"CHF\": \"0.9968\",\n    \"ISK\": \"148.30\",\n    \"NOK\": \"11.3940\",\n    \"TRY\": \"20.8632\",\n    \"AUD\": \"1.6268\"\n  }\n}"
+          },
+          "rerun": true
+        },
+        {
+          "snapshot": "20240706004405",
+          "ratesDate": "2024-07-05",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": ".forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 38756,
+            "promptTokens": 2652,
+            "outputTokens": 68,
+            "reply": "{\n  \"dateSelector\": \".jumbo-box h3\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \".forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2024-07-05",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 47826,
+            "promptTokens": 2363,
+            "outputTokens": 220,
+            "reply": "{\n  \"date\": \"2024-07-05\",\n  \"rates\": {\n    \"USD\": \"1.0824\",\n    \"JPY\": \"174.06\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.202\",\n    \"DKK\": \"7.4593\",\n    \"GBP\": \"0.84613\",\n    \"HUF\": \"392.55\",\n    \"PLN\": \"4.2798\",\n    \"RON\": \"4.9772\",\n    \"SEK\": \"11.3605\",\n    \"CHF\": \"0.9730\",\n    \"ISK\": \"149.30\",\n    \"NOK\": \"11.4480\",\n    \"TRY\": \"35.4062\",\n    \"AUD\": \"1.6073\"\n  }\n}"
+          },
+          "rerun": true
+        },
+        {
+          "snapshot": "20251001081955",
+          "ratesDate": "2025-09-30",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": ".forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 39580,
+            "promptTokens": 2650,
+            "outputTokens": 68,
+            "reply": "{\n  \"dateSelector\": \".jumbo-box h3\",\n  \"dateFormat\": \"MMMM d, yyyy\",\n  \"rowSelector\": \".forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": false,
+            "dateRead": "30 September 2025",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 49098,
+            "promptTokens": 2361,
+            "outputTokens": 218,
+            "reply": "{\n  \"date\": \"30 September 2025\",\n  \"rates\": {\n    \"USD\": \"1.1741\",\n    \"JPY\": \"173.76\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"24.335\",\n    \"DKK\": \"7.4649\",\n    \"GBP\": \"0.87340\",\n    \"HUF\": \"390.26\",\n    \"PLN\": \"4.2698\",\n    \"RON\": \"5.0806\",\n    \"SEK\": \"11.0565\",\n    \"CHF\": \"0.9364\",\n    \"ISK\": \"142.40\",\n    \"NOK\": \"11.7265\",\n    \"TRY\": \"48.8227\",\n    \"AUD\": \"1.7760\"\n  }\n}"
+          },
+          "rerun": true
+        }
+      ]
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "pages": [
+        {
+          "snapshot": "20170126215331",
+          "ratesDate": "2017-01-26",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 31,
+            "expected": 35,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "#navstats > div.ecb-mainnavFlyout > div.ecb-flyoutImgBox.floatRight > p.ecb-small",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 93249,
+            "promptTokens": 2611,
+            "outputTokens": 63,
+            "reply": "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-04-14",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 1,
+            "mistakes": [],
+            "millis": 104914,
+            "promptTokens": 2365,
+            "outputTokens": 220,
+            "reply": "{\n  \"date\": \"2023-04-14\",\n  \"rates\": {\n    \"USD\": \"1.0700\",\n    \"JPY\": \"122.40\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"27.021\",\n    \"DKK\": \"7.4367\",\n    \"GBP\": \"0.85143\",\n    \"HUF\": \"310.98\",\n    \"PLN\": \"4.3435\",\n    \"RON\": \"4.4943\",\n    \"SEK\": \"9.4660\",\n    \"CHF\": \"1.0693\",\n    \"NOK\": \"8.9215\",\n    \"HRK\": \"7.4800\",\n    \"RUB\": \"64.7269\",\n    \"TRY\": \"4.1361\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20180402010440",
+          "ratesDate": "2018-03-29",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 36,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 86784,
+            "promptTokens": 2612,
+            "outputTokens": 63,
+            "reply": "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-04-14",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 1,
+            "mistakes": [],
+            "millis": 101875,
+            "promptTokens": 2366,
+            "outputTokens": 221,
+            "reply": "{\n  \"date\": \"2023-04-14\",\n  \"rates\": {\n    \"USD\": \"1.2321\",\n    \"JPY\": \"131.15\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.425\",\n    \"DKK\": \"7.4530\",\n    \"GBP\": \"0.87490\",\n    \"HUF\": \"312.13\",\n    \"PLN\": \"4.2106\",\n    \"RON\": \"4.6565\",\n    \"SEK\": \"10.2843\",\n    \"CHF\": \"1.1779\",\n    \"ISK\": \"121.50\",\n    \"NOK\": \"9.6770\",\n    \"HRK\": \"7.4323\",\n    \"RUB\": \"70.8897\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20190716101746",
+          "ratesDate": "2019-07-15",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 36,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 80234,
+            "promptTokens": 2611,
+            "outputTokens": 63,
+            "reply": "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-04-14",
+            "exact": 15,
+            "wrong": 1,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [
+              "TRY 11.2234 (reference 6.4258)"
+            ],
+            "millis": 102910,
+            "promptTokens": 2365,
+            "outputTokens": 234,
+            "reply": "{\n  \"date\": \"2023-04-14\",\n  \"rates\": {\n    \"USD\": \"1.1269\",\n    \"JPY\": \"121.62\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.569\",\n    \"DKK\": \"7.4669\",\n    \"GBP\": \"0.89873\",\n    \"HUF\": \"325.66\",\n    \"PLN\": \"4.2622\",\n    \"RON\": \"4.7333\",\n    \"SEK\": \"10.5563\",\n    \"CHF\": \"1.1071\",\n    \"ISK\": \"141.70\",\n    \"NOK\": \"9.6223\",\n    \"HRK\": \"7.3935\",\n    \"RUB\": \"70.5998\",\n    \"TRY\": \"11.2234\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20201004211312",
+          "ratesDate": "2020-10-02",
+          "staleVersion": 1,
+          "digestChars": 6004,
+          "visible": 16,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 36,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h2",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.ecb-forexTable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number a span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 84237,
+            "promptTokens": 2612,
+            "outputTokens": 63,
+            "reply": "{\n  \"dateSelector\": null,\n  \"dateFormat\": null,\n  \"rowSelector\": \"table.ecb-forexTable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number a span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": false,
+            "dateRight": false,
+            "dateRead": "2023-04-14",
+            "exact": 15,
+            "wrong": 1,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [
+              "TRY 17.7750 (reference 9.0787)"
+            ],
+            "millis": 103390,
+            "promptTokens": 2366,
+            "outputTokens": 235,
+            "reply": "{\n  \"date\": \"2023-04-14\",\n  \"rates\": {\n    \"USD\": \"1.1730\",\n    \"JPY\": \"123.40\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"27.020\",\n    \"DKK\": \"7.4414\",\n    \"GBP\": \"0.90673\",\n    \"HUF\": \"358.88\",\n    \"PLN\": \"4.4944\",\n    \"RON\": \"4.8715\",\n    \"SEK\": \"10.4250\",\n    \"CHF\": \"1.0790\",\n    \"ISK\": \"162.20\",\n    \"NOK\": \"10.9040\",\n    \"HRK\": \"7.5620\",\n    \"RUB\": \"92.0825\",\n    \"TRY\": \"17.7750\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20220102132511",
+          "ratesDate": "2021-12-31",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 32,
+            "expected": 32,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 87837,
+            "promptTokens": 2653,
+            "outputTokens": 65,
+            "reply": "{\n  \"dateSelector\": \"h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2021-12-31",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 106502,
+            "promptTokens": 2364,
+            "outputTokens": 221,
+            "reply": "{\n  \"date\": \"2021-12-31\",\n  \"rates\": {\n    \"USD\": \"1.1326\",\n    \"JPY\": \"130.38\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"24.858\",\n    \"DKK\": \"7.4364\",\n    \"GBP\": \"0.84028\",\n    \"HUF\": \"369.19\",\n    \"PLN\": \"4.5969\",\n    \"RON\": \"4.9490\",\n    \"SEK\": \"10.2503\",\n    \"CHF\": \"1.0331\",\n    \"ISK\": \"147.60\",\n    \"NOK\": \"9.9888\",\n    \"HRK\": \"7.5156\",\n    \"RUB\": \"85.3004\"\n  }\n}"
+          }
+        },
+        {
+          "snapshot": "20230401051832",
+          "ratesDate": "2023-03-31",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 87631,
+            "promptTokens": 2648,
+            "outputTokens": 65,
+            "reply": "{\n  \"dateSelector\": \"h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2023-03-31",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 96587,
+            "promptTokens": 2359,
+            "outputTokens": 220,
+            "reply": "{\n  \"date\": \"2023-03-31\",\n  \"rates\": {\n    \"USD\": \"1.0875\",\n    \"JPY\": \"144.83\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"23.492\",\n    \"DKK\": \"7.4485\",\n    \"GBP\": \"0.87920\",\n    \"HUF\": \"379.50\",\n    \"PLN\": \"4.6700\",\n    \"RON\": \"4.9490\",\n    \"SEK\": \"11.2805\",\n    \"CHF\": \"0.9968\",\n    \"ISK\": \"148.30\",\n    \"NOK\": \"11.3940\",\n    \"TRY\": \"20.8632\",\n    \"AUD\": \"1.6268\"\n  }\n}"
+          },
+          "rerun": true
+        },
+        {
+          "snapshot": "20240706004405",
+          "ratesDate": "2024-07-05",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 79216,
+            "promptTokens": 2652,
+            "outputTokens": 65,
+            "reply": "{\n  \"dateSelector\": \"h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2024-07-05",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 97138,
+            "promptTokens": 2363,
+            "outputTokens": 220,
+            "reply": "{\n  \"date\": \"2024-07-05\",\n  \"rates\": {\n    \"USD\": \"1.0824\",\n    \"JPY\": \"174.06\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"25.202\",\n    \"DKK\": \"7.4593\",\n    \"GBP\": \"0.84613\",\n    \"HUF\": \"392.55\",\n    \"PLN\": \"4.2798\",\n    \"RON\": \"4.9772\",\n    \"SEK\": \"11.3605\",\n    \"CHF\": \"0.9730\",\n    \"ISK\": \"149.30\",\n    \"NOK\": \"11.4480\",\n    \"TRY\": \"35.4062\",\n    \"AUD\": \"1.6073\"\n  }\n}"
+          },
+          "rerun": true
+        },
+        {
+          "snapshot": "20251001081955",
+          "ratesDate": "2025-09-30",
+          "staleVersion": 2,
+          "digestChars": 6004,
+          "visible": 15,
+          "repair": {
+            "accepted": true,
+            "matched": 30,
+            "expected": 30,
+            "wrong": 0,
+            "error": null,
+            "recipe": {
+              "base": "EUR",
+              "dateSelector": "h3",
+              "dateFormat": "d MMMM yyyy",
+              "rowSelector": "table.forextable tbody tr",
+              "currencySelector": "td.currency a",
+              "rateSelector": "td.spot.number span.rate",
+              "dateRegex": "(\\d{1,2} [A-Za-z]+ \\d{4})"
+            },
+            "millis": 79563,
+            "promptTokens": 2650,
+            "outputTokens": 65,
+            "reply": "{\n  \"dateSelector\": \"h3\",\n  \"dateFormat\": \"d MMMM yyyy\",\n  \"rowSelector\": \"table.forextable tbody tr\",\n  \"currencySelector\": \"td.currency a\",\n  \"rateSelector\": \"td.spot.number span.rate\",\n  \"dateRegex\": null\n}"
+          },
+          "extract": {
+            "dateVisible": true,
+            "dateRight": true,
+            "dateRead": "2025-09-30",
+            "exact": 15,
+            "wrong": 0,
+            "invented": 0,
+            "missing": 0,
+            "mistakes": [],
+            "millis": 95090,
+            "promptTokens": 2361,
+            "outputTokens": 220,
+            "reply": "{\n  \"date\": \"2025-09-30\",\n  \"rates\": {\n    \"USD\": \"1.1741\",\n    \"JPY\": \"173.76\",\n    \"BGN\": \"1.9558\",\n    \"CZK\": \"24.335\",\n    \"DKK\": \"7.4649\",\n    \"GBP\": \"0.87340\",\n    \"HUF\": \"390.26\",\n    \"PLN\": \"4.2698\",\n    \"RON\": \"5.0806\",\n    \"SEK\": \"11.0565\",\n    \"CHF\": \"0.9364\",\n    \"ISK\": \"142.40\",\n    \"NOK\": \"11.7265\",\n    \"TRY\": \"48.8227\",\n    \"AUD\": \"1.7760\"\n  }\n}"
+          },
+          "rerun": true
+        }
+      ]
+    }
+  ]
+}

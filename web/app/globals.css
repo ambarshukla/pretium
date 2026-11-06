@@ -564,3 +564,29 @@ td.reading.missing {
 .viewer .legend {
   margin: 10px 0;
 }
+
+/* Batch strips: one cell per page */
+.strip-row { margin: 10px 0 14px; }
+.strip { display: flex; gap: 1px; flex-wrap: nowrap; }
+.strip .cell { flex: 1 1 0; min-width: 3px; height: 22px; padding: 0; border: 0; border-radius: 0; cursor: pointer; }
+.strip .cell.here { outline: 2px solid #111; outline-offset: 1px; position: relative; z-index: 1; }
+.strip-ends { display: flex; justify-content: space-between; }
+.cell-ok { background: #2e7d32; }
+.cell-part { background: #f0b429; }
+.cell-wrong { background: #c62828; }
+.cell-none { background: #c9ced6; }
+.key.cell-ok, .key.cell-part, .key.cell-wrong, .key.cell-none { color: #fff; padding: 0 6px; border-radius: 3px; }
+.key.cell-none, .key.cell-part { color: #111; }
+
+/* Proof page: the cells the comparison used */
+tr.used td { background: #fff6d6; }
+tr.used td:first-child { box-shadow: inset 3px 0 0 #f0b429; }
+
+th.group { text-align: center; border-bottom: 1px solid #d0d5dd; }
+
+/* Tour */
+ol.tour { list-style: none; padding: 0; margin: 0; }
+ol.tour > li { margin-bottom: 14px; }
+ol.tour h2 { margin-top: 0; }
+.tour-go { font-weight: 600; }
+.notice { border-left: 3px solid #2e7d32; padding-left: 10px; }

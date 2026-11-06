@@ -1,4 +1,5 @@
 import { api, apiOrNull, findings, num, period, type Comparison, type Corridor, type HistoryPoint } from "@/lib/api";
+import Link from "next/link";
 import { HistoryChart } from "./history-chart";
 import { Picker } from "./picker";
 
@@ -35,7 +36,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Sear
       <p className="lede">
         Every provider surveyed in a corridor, cheapest first. The total cost is the fee plus the hidden markup in
         the exchange rate. Every number links to the file it came from, and every one was checked before it was
-        shown.
+        shown. New here? <Link href="/tour">Take the five-minute tour</Link>.
       </p>
 
       <Picker small={small ?? []} large={large ?? []} send={send} receive={receive} amount={amount} />
@@ -156,6 +157,9 @@ export default async function ComparePage({ searchParams }: { searchParams: Sear
                             <br />
                             run: {q.runId.slice(0, 8)}
                           </div>
+                          <Link href={`/proof/${q.sourceId}/${q.evidenceSha256}/${q.sourceRecordId}?amount=${amount}`}>
+                            the row in the file, and the arithmetic →
+                          </Link>
                         </details>
                       </td>
                     </tr>

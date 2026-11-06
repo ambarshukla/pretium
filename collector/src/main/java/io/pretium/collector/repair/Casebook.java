@@ -21,6 +21,7 @@ public record Casebook(
    *
    * @param by who produced the recipe: "recipe", "library", "model" or "human"
    * @param modelReply the model's reply exactly as it came back, for proposals only
+   * @param prompt the prompt exactly as it was sent to the model, for proposals only
    */
   public record Attempt(
       String by,
@@ -35,7 +36,8 @@ public record Casebook(
       Long millis,
       Integer promptTokens,
       Integer outputTokens,
-      String modelReply) {
+      String modelReply,
+      String prompt) {
 
     public static Attempt of(String by, SourceSpec.Recipe recipe, RecipeVerifier.Verdict v) {
       return new Attempt(
@@ -48,6 +50,7 @@ public record Casebook(
           v.expected(),
           v.matched(),
           v.readings(),
+          null,
           null,
           null,
           null,
@@ -69,7 +72,8 @@ public record Casebook(
           p.millis(),
           p.promptTokens(),
           p.outputTokens(),
-          p.raw());
+          p.raw(),
+          p.prompt());
     }
   }
 

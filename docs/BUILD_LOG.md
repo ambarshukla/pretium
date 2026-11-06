@@ -250,3 +250,19 @@ that once worked, a hand-written one, or a local model shown the page the way th
 shows it. Asked about the January 2017 page, `qwen2.5-coder:7b` proposed a recipe in 71 s
 (2,611 tokens in, 63 out) that read all 31 rates on it exactly. Nothing run in the lab is
 stored. Model runs and hand-written recipes need a review key; see DECISIONS D-018.
+
+## 2026-11-06 · The parser lab as a workbench
+
+The lab and the case pages now show the raw page itself, rendered and as source, with what a
+recipe's selectors matched outlined in colour (date, rows, currency cells, rate cells) and
+highlighted by line in the source. A recipe is shown as the Java the extractor runs with it,
+and a repair as a diff of that code. A run is traced row by row. On the copy archived on 15
+April 2019 the trace shows exactly why it cannot be read: the row selector matches 14 rows,
+13 are read exactly, and the 14th (HRK) has a currency cell but no rate cell, because the
+archived file ends there.
+
+The repair evaluation was re-run to record each prompt as it was sent. Outcomes, recipes and
+readings are the same as before; one reply differed only in the date keys, which the program
+overwrites. Through the lab locally, `qwen2.5-coder:7b` proposed a recipe for the January
+2019 page in 66 s that read 32 of the 36 rates the ECB's feed has for that day, all exactly, and
+was accepted.

@@ -1,6 +1,7 @@
 package io.pretium.collector.review;
 
 import io.pretium.collector.extract.ExtractionException;
+import io.pretium.collector.extract.HtmlRateTableExtractor;
 import io.pretium.collector.raw.RawStore;
 import io.pretium.collector.repair.OllamaRepairer;
 import io.pretium.collector.repair.PageDigest;
@@ -12,6 +13,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -22,11 +24,19 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Range;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Selector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -72,10 +82,17 @@ public class Lab {
       Integer outputTokens,
       String modelReply,
       String promptError,
-      String digest) {
+      String digest,
+      String prompt,
+      HtmlRateTableExtractor.Trace trace) {
 
     static Result of(
-        String pageId, String by, String model, SourceSpec.Recipe r, RecipeVerifier.Verdict v) {
+        String pageId,
+        String by,
+        String model,
+        SourceSpec.Recipe r,
+        RecipeVerifier.Verdict v,
+        HtmlRateTableExtractor.Trace trace) {
       return new Result(
           pageId,
           by,
@@ -93,9 +110,42 @@ public class Lab {
           null,
           null,
           null,
-          null);
+          null,
+          null,
+          trace);
     }
   }
+
+  /**
+   * Where a recipe's selectors landed in the page's source: {@code kind} is date, row, currency or
+   * rate; {@code row} is the row's index for the last three; {@code line} is 1-based.
+   */
+  public record Mark(String kind, int line, Integer row) {}
+
+  /**
+   * One raw page, for reading in the browser.
+   *
+   * @param source the file exactly as stored
+   * @param rendered the page with scripts removed, nothing loaded from elsewhere, and what the
+   *     recipe matched outlined; meant for a sandboxed frame
+   * @param region the same, cut down to the smallest element holding everything the recipe matched
+   *     (the date and the table), or null if it matched nothing
+   * @param marks where each selector matched, by source line
+   * @param selectorError why a selector could not be applied, if one was not valid CSS
+   * @param digest the part of the page a model is shown
+   * @param prompt the prompt a model would be sent for this page, given the recipe in use
+   */
+  public record View(
+      String pageId,
+      String archiveUrl,
+      int bytes,
+      String source,
+      String rendered,
+      String region,
+      List<Mark> marks,
+      String selectorError,
+      String digest,
+      String prompt) {}
 
   /** Thrown when a model is already working: one at a time, since each takes about a minute. */
   public static class Busy extends RuntimeException {
@@ -229,8 +279,159 @@ public class Lab {
 
   public Result runRecipe(String pageId, Path page, String by, SourceSpec.Recipe recipe)
       throws IOException {
-    return Result.of(pageId, by, null, recipe, verifier().verify(page, recipe));
+    return Result.of(
+        pageId, by, null, recipe, verifier().verify(page, recipe), trace(page, recipe));
   }
+
+  static HtmlRateTableExtractor.Trace trace(Path page, SourceSpec.Recipe recipe)
+      throws IOException {
+    return HtmlRateTableExtractor.trace(
+        Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name()), recipe);
+  }
+
+  /** The archived copy's address at the Internet Archive, for archive pages. */
+  static String archiveUrl(String pageId, String pageUrl) {
+    return pageId.startsWith("archive:")
+        ? "https://web.archive.org/web/" + pageId.substring("archive:".length()) + "/" + pageUrl
+        : null;
+  }
+
+  /**
+   * The page for reading: its source, a safe rendering with the recipe's matches outlined, where
+   * each selector matched, and what a model would be shown and asked.
+   */
+  public View view(
+      String pageId, Path page, SourceSpec.Recipe recipe, SourceSpec.Recipe inUse, String pageUrl)
+      throws IOException {
+    String source = Files.readString(page, StandardCharsets.UTF_8);
+    Document doc = Jsoup.parse(source, "", Parser.htmlParser().setTrackPosition(true));
+    List<Mark> marks = new ArrayList<>();
+    List<Element> marked = new ArrayList<>();
+    String selectorError = null;
+    if (recipe != null) {
+      try {
+        mark(doc, recipe, marks, marked);
+      } catch (Selector.SelectorParseException e) {
+        selectorError = e.getMessage();
+      }
+    }
+    String digest = PageDigest.of(page);
+    RecipeVerifier.Verdict current = verifier().verify(page, inUse);
+    String error =
+        current.accepted()
+            ? "none: the recipe in use reads this page; propose a recipe for it anyway"
+            : current.error();
+    return new View(
+        pageId,
+        archiveUrl(pageId, pageUrl),
+        source.getBytes(StandardCharsets.UTF_8).length,
+        source,
+        safe(doc),
+        region(doc, marked),
+        List.copyOf(marks),
+        selectorError,
+        digest,
+        OllamaRepairer.prompt(inUse, error, digest));
+  }
+
+  private static void mark(
+      Document doc, SourceSpec.Recipe recipe, List<Mark> marks, List<Element> marked) {
+    String dateSelector = recipe.get("dateSelector", null);
+    if (dateSelector != null) {
+      Element date = doc.selectFirst(dateSelector);
+      if (date != null) {
+        marks.add(new Mark("date", line(date), null));
+        marked.add(date);
+        date.addClass("pretium-date");
+      }
+    }
+    String rowSelector = recipe.get("rowSelector", null);
+    if (rowSelector == null) {
+      return;
+    }
+    String currencySelector = recipe.get("currencySelector", null);
+    String rateSelector = recipe.get("rateSelector", null);
+    int i = 0;
+    for (Element row : doc.select(rowSelector)) {
+      marks.add(new Mark("row", line(row), i));
+      marked.add(row);
+      Element currency = currencySelector == null ? null : row.selectFirst(currencySelector);
+      if (currency != null) {
+        marks.add(new Mark("currency", line(currency), i));
+        currency.addClass("pretium-currency");
+      }
+      Element rate = rateSelector == null ? null : row.selectFirst(rateSelector);
+      if (rate != null) {
+        marks.add(new Mark("rate", line(rate), i));
+        rate.addClass("pretium-rate");
+      }
+      row.addClass("pretium-row");
+      i++;
+    }
+  }
+
+  /**
+   * The smallest element holding everything marked, as a page of its own with the same safety
+   * header. Call after {@link #safe}, which has already cleaned the document.
+   */
+  private static String region(Document doc, List<Element> marked) {
+    if (marked.isEmpty()) {
+      return null;
+    }
+    Element common = marked.get(0);
+    for (Element e : marked) {
+      while (common != null && common != e && !e.parents().contains(common)) {
+        common = common.parent();
+      }
+    }
+    if (common == null || common == doc.body() || common == doc) {
+      return null;
+    }
+    return "<!doctype html><html><head>"
+        + doc.head().html()
+        + "</head><body>"
+        + common.outerHtml()
+        + "</body></html>";
+  }
+
+  private static int line(Element e) {
+    Range r = e.sourceRange();
+    return r.isTracked() ? r.start().lineNumber() : 0;
+  }
+
+  /**
+   * The page as something safe to show in a sandboxed frame: no scripts, no frames, no event
+   * handlers, and a content security policy that stops it loading anything from anywhere, so
+   * opening it sends no request to the ECB or the archive.
+   */
+  private static String safe(Document doc) {
+    doc.select("script, noscript, iframe, frame, object, embed, base, link, meta[http-equiv]")
+        .remove();
+    for (Element e : doc.getAllElements()) {
+      List<String> handlers =
+          e.attributes().asList().stream()
+              .map(Attribute::getKey)
+              .filter(k -> k.toLowerCase(Locale.ROOT).startsWith("on"))
+              .toList();
+      handlers.forEach(e::removeAttr);
+    }
+    doc.head()
+        .prepend(
+            "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none';"
+                + " style-src 'unsafe-inline'; img-src data:\">")
+        .appendElement("style")
+        .appendText(HIGHLIGHT);
+    return doc.outerHtml();
+  }
+
+  private static final String HIGHLIGHT =
+      """
+      body { font-family: system-ui, sans-serif; font-size: 14px; margin: 12px; }
+      .pretium-row { outline: 2px solid #2563eb; outline-offset: -1px; background: #eff6ff; }
+      .pretium-currency { outline: 2px solid #16a34a; background: #dcfce7; }
+      .pretium-rate { outline: 2px solid #ea580c; background: #ffedd5; }
+      .pretium-date { outline: 2px solid #9333ea; background: #f3e8ff; }
+      """;
 
   /**
    * Asks a model for a recipe for this page, exactly as the repair loop would (same prompt, same
@@ -256,7 +457,7 @@ public class Lab {
           new OllamaRepairer(ollamaUrl, model)
               .propose(inUse, error, digest, PageDigest.dateHint(page));
       RecipeVerifier.Verdict v = verifier.verify(page, p.recipe());
-      Result r = Result.of(pageId, "model", model, p.recipe(), v);
+      Result r = Result.of(pageId, "model", model, p.recipe(), v, trace(page, p.recipe()));
       return new Result(
           r.pageId(),
           r.by(),
@@ -274,7 +475,9 @@ public class Lab {
           p.outputTokens(),
           p.raw(),
           error,
-          digest);
+          digest,
+          p.prompt(),
+          r.trace());
     } finally {
       modelSlot.release();
     }

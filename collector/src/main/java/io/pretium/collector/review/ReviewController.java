@@ -34,6 +34,8 @@ import org.springframework.web.server.ResponseStatusException;
  *   <li>{@code POST /api/v1/repairs/{source}/{snapshot}/decisions} — record a decision (key)
  *   <li>{@code GET /api/v1/lab} — pages, known recipes and models to run against them
  *   <li>{@code POST /api/v1/lab/runs} — run one parser against one page; nothing is stored
+ *   <li>{@code POST /api/v1/lab/view} — one raw page: its source, a safe rendering with what a
+ *       recipe matched outlined, and what a model would be shown and asked
  * </ul>
  *
  * <p>Anything that writes, runs a model, or runs a recipe a person typed needs the review key
@@ -91,13 +93,23 @@ public class ReviewController {
   public record DecisionRequest(
       DecisionLog.Action action, Map<String, String> recipe, String note) {}
 
+  /**
+   * What the lab can run. {@code inUse} is the recipe version the collector reads the live page
+   * with; {@code cases} maps the archived pages that are repair cases to their outcome.
+   */
   public record LabInfo(
       String source,
+      String pageUrl,
       boolean keyRequiredForModelsAndCustomRecipes,
       boolean reviewsEnabled,
       List<Lab.Page> pages,
       List<SourceSpec.Recipe> recipes,
+      int inUse,
+      Map<String, String> cases,
       List<String> models) {}
+
+  /** A page to show, with the recipe whose matches to outline: a known version, or one typed. */
+  public record ViewRequest(String pageId, Integer recipeVersion, Map<String, String> recipe) {}
 
   /**
    * One run: a page, and exactly one of a known recipe version, a model, or a recipe a person
@@ -231,13 +243,45 @@ public class ReviewController {
 
   @GetMapping("/api/v1/lab")
   public LabInfo lab() throws IOException {
+    Map<String, String> outcomes = new LinkedHashMap<>();
+    cases
+        .casebook(Lab.SOURCE)
+        .ifPresent(b -> b.cases().forEach(c -> outcomes.put(c.snapshot(), c.outcome())));
+    SourceSpec spec = sources.find(Lab.SOURCE).orElseThrow(() -> notFound("no spec"));
     return new LabInfo(
         Lab.SOURCE,
+        spec.url(),
         true,
         key != null,
         lab.pages(),
         cases.knownRecipes(Lab.SOURCE),
+        spec.recipeVersion(),
+        outcomes,
         key == null ? List.of() : lab.models());
+  }
+
+  /**
+   * Selectors only are applied here (no date pattern, no numbers parsed), so a typed recipe needs
+   * no key: the worst it can do is outline the wrong elements.
+   */
+  @PostMapping("/api/v1/lab/view")
+  public Lab.View view(@RequestBody ViewRequest req) throws IOException {
+    if (req == null) {
+      throw bad("empty request");
+    }
+    Path page = lab.file(req.pageId()).orElseThrow(() -> notFound("no such page"));
+    SourceSpec spec = sources.find(Lab.SOURCE).orElseThrow(() -> notFound("no spec"));
+    SourceSpec.Recipe outline = null;
+    if (req.recipeVersion() != null) {
+      outline =
+          cases.knownRecipes(Lab.SOURCE).stream()
+              .filter(k -> k.version() == req.recipeVersion())
+              .findFirst()
+              .orElseThrow(() -> notFound("no such recipe version"));
+    } else if (req.recipe() != null) {
+      outline = new SourceSpec.Recipe(0, clean(req.recipe()));
+    }
+    return lab.view(req.pageId(), page, outline, spec.recipe(), spec.url());
   }
 
   @PostMapping("/api/v1/lab/runs")

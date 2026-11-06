@@ -22,6 +22,7 @@ export type Attempt = {
   promptTokens: number | null;
   outputTokens: number | null;
   modelReply: string | null;
+  prompt: string | null;
 };
 
 export type RepairCase = {
@@ -80,11 +81,69 @@ export type LabPage = { id: string; origin: "collected" | "archive"; when: strin
 
 export type LabInfo = {
   source: string;
+  pageUrl: string;
   reviewsEnabled: boolean;
   pages: LabPage[];
   recipes: { version: number; settings: Recipe }[];
+  inUse: number;
+  cases: Record<string, RepairCase["outcome"]>;
   models: string[];
 };
+
+export type DateStep = {
+  selector: string;
+  elementText: string | null;
+  regex: string | null;
+  dateText: string | null;
+  format: string | null;
+  date: string | null;
+};
+
+export type TraceRow = {
+  index: number;
+  currencyText: string | null;
+  rateText: string | null;
+  rate: number | null;
+  skipped: string | null;
+};
+
+export type Trace = {
+  date: string | null;
+  dateStep: DateStep | null;
+  rowSelector: string | null;
+  rows: TraceRow[];
+  error: string | null;
+};
+
+export type Mark = { kind: "date" | "row" | "currency" | "rate"; line: number; row: number | null };
+
+export type PageView = {
+  pageId: string;
+  archiveUrl: string | null;
+  bytes: number;
+  source: string;
+  rendered: string;
+  region: string | null;
+  marks: Mark[];
+  selectorError: string | null;
+  digest: string;
+  prompt: string;
+};
+
+/** The large parts of a page view; the browser is sent only the one being looked at. */
+export type ViewPart = "source" | "rendered" | "region";
+
+export type PageViewPart = Omit<PageView, ViewPart> & {
+  lines: number;
+  part: ViewPart | null;
+  content: string | null;
+};
+
+export function viewPart(v: PageView, part: ViewPart | null): PageViewPart {
+  const { source, rendered, region, ...rest } = v;
+  const content = part === "source" ? source : part === "rendered" ? rendered : part === "region" ? region : null;
+  return { ...rest, lines: source.split("\n").length, part, content };
+}
 
 export type LabResult = {
   pageId: string;
@@ -104,6 +163,8 @@ export type LabResult = {
   modelReply: string | null;
   promptError: string | null;
   digest: string | null;
+  prompt: string | null;
+  trace: Trace | null;
 };
 
 export async function collector<T>(path: string): Promise<T | null> {

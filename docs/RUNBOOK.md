@@ -76,3 +76,15 @@ the evidence (`?force=true`).
 `docker stats --no-stream`. Limits are set per container in `docker-compose.yml`. The
 largest consumer during a first load is the catalog checking 400,000 prices; at rest the
 stack uses about 1 GB.
+
+## Debugging the HTML parser by hand
+
+Open `/lab`, pick the page (anything the collector fetched, or an archived copy), pick a
+recipe, and run it. The trace says where it stopped: no element for the date selector, a date
+the pattern does not match, a row selector that matches nothing, or rows without a currency
+or rate cell. "Edit a copy" turns any recipe into editable fields, and the outline on the page
+follows the fields as they change. A recipe that reads the page exactly can be recorded on the
+page's repair case (review key), then put into the source's YAML with its version bumped.
+
+Archived copies live in `${PRETIUM_HOST_DATA}/archive/<timestamp>.html` on the host, mounted
+read-only into the collector. Adding one is a file copy; the lab lists it on the next request.

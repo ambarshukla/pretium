@@ -56,7 +56,8 @@ public final class OllamaRepairer {
 
   private final HttpClient http =
       HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-  private final JsonMapper json = JsonMapper.builder().build();
+  private static final JsonMapper JSON = JsonMapper.builder().build();
+  private final JsonMapper json = JSON;
   private final URI endpoint;
   private final String model;
 
@@ -69,14 +70,31 @@ public final class OllamaRepairer {
     return model;
   }
 
-  /** A proposal and what it cost. */
+  /**
+   * A proposal and what it cost.
+   *
+   * @param prompt the prompt exactly as it was sent
+   * @param raw the model's reply exactly as it came back
+   */
   public record Proposal(
-      SourceSpec.Recipe recipe, long millis, int promptTokens, int outputTokens, String raw) {}
+      SourceSpec.Recipe recipe,
+      long millis,
+      int promptTokens,
+      int outputTokens,
+      String raw,
+      String prompt) {}
+
+  /**
+   * The prompt for a page: the recipe in use, why it failed, and the part of the page that matters.
+   */
+  public static String prompt(SourceSpec.Recipe current, String error, String digest) {
+    return PROMPT.formatted(JSON.writeValueAsString(current.settings()), error, digest);
+  }
 
   public Proposal propose(
       SourceSpec.Recipe current, String error, String digest, PageDigest.DateHint date)
       throws IOException, InterruptedException {
-    String prompt = PROMPT.formatted(json.writeValueAsString(current.settings()), error, digest);
+    String prompt = prompt(current, error, digest);
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("model", model);
     body.put("prompt", prompt);
@@ -132,6 +150,7 @@ public final class OllamaRepairer {
         millis,
         reply.path("prompt_eval_count").asInt(0),
         reply.path("eval_count").asInt(0),
-        text);
+        text,
+        prompt);
   }
 }

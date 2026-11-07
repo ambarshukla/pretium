@@ -23,7 +23,12 @@ spring:
 
 pretium:
   reconcile:
+    # The euro reference rates the benchmark and cross rates are computed from.
     reference: ecb-sdmx-exr
+    # Each publisher's reference channel, and the channels checked against it.
+    groups:
+      ecb-sdmx-exr: [ecb-eurofxref-daily, ecb-reference-html]
+      cnb-fixing-txt: [cnb-fixing-html]
   # Freshness targets. ECB rates are published on TARGET business days only, so a
   # Monday morning is legitimately three days after Friday's rates: 96 hours
   # covers a weekend plus one holiday.
@@ -31,6 +36,9 @@ pretium:
     ecb-sdmx-exr: 96h
     ecb-eurofxref-daily: 96h
     ecb-reference-html: 96h
+    # The CNB fixes on Czech working days; the same weekend-plus-holiday allowance.
+    cnb-fixing-txt: 96h
+    cnb-fixing-html: 96h
     # Weekly check of a quarterly dataset.
     wb-rpw: 8d
 

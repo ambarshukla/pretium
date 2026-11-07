@@ -46,6 +46,31 @@ Collected through three channels, which must agree:
   pretium uses them as a reference, not as transaction rates.
 - **robots.txt** (read on every collection, cached for a day) allows all three URLs.
 
+### Czech National Bank: exchange rate fixing
+
+Collected through two channels, which must agree:
+
+| Source id | Channel | URL |
+|---|---|---|
+| `cnb-fixing-txt` | Daily text file (the first run reads this year's file) | `www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/daily.txt` |
+| `cnb-fixing-html` | Public web page, read with CSS selectors | `www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/` |
+
+- **Terms** (CNB "Disclaimer & copyright", read 7 November 2026): the website's information
+  may be stored, distributed and reproduced, except texts with a named author and images whose
+  copyright is not the CNB's. The CNB must be stated as the source, and the content may not be
+  altered. Attribution: *"Source: the CNB"*. The rates are stored per one unit of currency
+  (the CNB quotes some per 100 or 1,000 units); that is a change of unit, shown as such, and
+  the number as published is kept in the evidence file.
+- **Note:** the CNB asks users to verify information before commercial use. pretium uses the
+  fixing as a reference, not as a transaction rate.
+- **robots.txt** (read 7 November 2026) disallows only two unrelated paths; both URLs are
+  allowed.
+- **Why the CNB:** a second publisher with a public page *and* a structured channel carrying
+  the same numbers, so a scraper repair can be checked exactly, as with the ECB. Other central
+  banks were considered: Norges Bank's page builds its table in the browser (the HTML has no
+  rates), Danmarks Nationalbank's has no table, and the Reserve Bank of Australia's and the
+  Bank of Canada's are candidates for later.
+
 ### ISO 4217 currency codes (reference table, not collected)
 
 - **What:** which currency each country uses, for the comparison of the survey's interbank rate
@@ -73,6 +98,14 @@ real rows from the Q2 2016 survey, copied into the test code with their record i
 
 One navigation-menu link (to the ECB press section) was removed from the 3 November 2026 page;
 the rates table and everything the extractor reads are untouched.
+
+`cnb-fixing-2026-11-06.html` and `cnb-fixing-2026-11-06.txt` are the CNB's page and daily text
+file as fetched on 7 November 2026, both showing the fixing of 6 November (Source: the CNB). The
+text file is verbatim. From the page, two footer links whose text is unrelated to the rates
+were removed (the Governor's speeches and articles); the table, the date line and everything
+the recipe reads are untouched. `cnb-fixing-year-2005-excerpt.txt` is six verbatim lines of
+the CNB's 2005 yearly file (`year.txt?year=2005`): the first two, and the turn of March into
+April, when the header changed from 31 currencies to 36.
 
 `ecb-sdmx-2026-10-29.csv` holds the 29 rows for 29 October 2026, copied verbatim from the
 SDMX history file collected on 4 November 2026 (Source: ECB). It is the answer key for a test

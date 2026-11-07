@@ -397,6 +397,8 @@ public class ReviewController {
     for (String k :
         List.of(
             "base",
+            "quote",
+            "amountSelector",
             "dateSelector",
             "dateFormat",
             "dateRegex",
@@ -408,7 +410,9 @@ public class ReviewController {
         out.put(k, v.strip());
       }
     }
-    out.putIfAbsent("base", "EUR");
+    if (!out.containsKey("quote")) {
+      out.putIfAbsent("base", "EUR");
+    }
     return out;
   }
 

@@ -65,6 +65,7 @@ public record SourceSpec(
   public enum Format {
     ECB_EUROFXREF_XML,
     ECB_SDMX_CSV,
+    CNB_FIXING_TXT,
     HTML_RATE_TABLE,
     RPW_XLSX
   }

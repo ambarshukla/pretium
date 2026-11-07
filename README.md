@@ -16,10 +16,12 @@ language models on the same pages.
 
 ## What it does
 
-- **Collects** four real sources on their own schedules: the World Bank's *Remittance
+- **Collects** six real sources on their own schedules: the World Bank's *Remittance
   Prices Worldwide* survey (about 200,000 provider prices across hundreds of corridors
-  since 2016) and the ECB's euro reference rates through three channels (an SDMX API, an
-  XML file, and the public web page, scraped with CSS selectors).
+  since 2016), the ECB's euro reference rates through three channels (an SDMX API, an
+  XML file, and the public web page, scraped with CSS selectors), and the Czech National
+  Bank's daily fixing through two (a text file and its web page, scraped by the same
+  extractor with a different recipe).
 - **Collects politely**: it names itself in its User-Agent, reads robots.txt first, waits
   between requests, asks conditionally (ETag), and treats a refusal as final.
 - **Keeps the evidence**: every response is stored exactly as received, named by its
@@ -27,8 +29,9 @@ language models on the same pages.
 - **Checks every price** before publishing it, using identities the numbers must satisfy
   (total cost = fee + FX margin; FX margin = the gap from the interbank rate), with
   tolerances derived from the precision the source actually publishes.
-- **Reconciles** the three ECB channels to the last digit, and keeps every value a source
-  later revises.
+- **Reconciles** each publisher's channels to the last digit (never one publisher against
+  another: two central banks fix the same pair at different times), and keeps every value a
+  source later revises.
 - **Serves** a comparison API and a web front end: cheapest provider first, the checks each
   price passed, and its proof.
 

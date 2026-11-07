@@ -1,8 +1,12 @@
 package io.pretium.catalog.api;
 
+import io.pretium.catalog.reconcile.ReconcileProperties;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.TreeMap;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,11 +20,81 @@ public class RatesController {
 
   private final JdbcTemplate jdbc;
   private final String reference;
+  private final Map<String, List<String>> groups;
 
-  public RatesController(
-      JdbcTemplate jdbc, @Value("${pretium.reconcile.reference:ecb-sdmx-exr}") String reference) {
+  public RatesController(JdbcTemplate jdbc, ReconcileProperties reconcile) {
     this.jdbc = jdbc;
-    this.reference = reference;
+    this.reference = reconcile.reference();
+    this.groups = reconcile.groups();
+  }
+
+  /**
+   * One publisher's channels side by side.
+   *
+   * @param reference the publisher's reference channel
+   * @param channels the channels checked against it
+   * @param date the latest day the reference has, or null if it has none yet
+   * @param rows one per currency pair: the rate in each channel (absent if the channel lacks it)
+   */
+  public record Group(
+      String reference, List<String> channels, String date, List<Row> rows, int agreeing) {}
+
+  /** One currency pair across a publisher's channels. */
+  public record Row(String base, String quote, Map<String, BigDecimal> rates, boolean agree) {}
+
+  /**
+   * Every publisher's latest day, each channel side by side: the same check as {@link #latest}, for
+   * any publisher configured under {@code pretium.reconcile.groups}.
+   */
+  @GetMapping("/channels")
+  public List<Group> channels() {
+    List<Group> out = new ArrayList<>();
+    groups.forEach(
+        (ref, channels) -> {
+          List<String> all = new ArrayList<>(channels);
+          all.addFirst(ref);
+          String day =
+              jdbc.queryForObject(
+                  "select max(rate_date)::text from reference_rate where source_id = ?",
+                  String.class,
+                  ref);
+          Map<String, Map<String, BigDecimal>> byPair = new TreeMap<>();
+          if (day != null) {
+            jdbc.query(
+                """
+                select source_id, base, quote, rate from reference_rate
+                 where rate_date = ?::date and source_id = any (string_to_array(?, ','))
+                """,
+                rs -> {
+                  byPair
+                      .computeIfAbsent(
+                          rs.getString("base") + "/" + rs.getString("quote"),
+                          k -> new LinkedHashMap<>())
+                      .put(rs.getString("source_id"), rs.getBigDecimal("rate"));
+                },
+                day,
+                String.join(",", all));
+          }
+          List<Row> rows = new ArrayList<>();
+          byPair.forEach(
+              (pair, rates) -> {
+                BigDecimal first = rates.get(ref);
+                boolean agree =
+                    first != null
+                        && all.stream()
+                            .allMatch(
+                                c -> rates.get(c) != null && rates.get(c).compareTo(first) == 0);
+                rows.add(new Row(pair.substring(0, 3), pair.substring(4), rates, agree));
+              });
+          out.add(
+              new Group(
+                  ref,
+                  List.copyOf(channels),
+                  day,
+                  rows,
+                  (int) rows.stream().filter(Row::agree).count()));
+        });
+    return out;
   }
 
   /** The latest day's rates against the euro, as each channel has it, side by side. */

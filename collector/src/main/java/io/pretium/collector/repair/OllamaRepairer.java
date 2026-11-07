@@ -143,7 +143,15 @@ public final class OllamaRepairer {
     }
 
     Map<String, String> settings = new LinkedHashMap<>();
-    settings.put("base", current.get("base", "EUR"));
+    // The pair's direction and the amount column are facts about the source, not the layout: kept.
+    if (current.get("quote", null) != null) {
+      settings.put("quote", current.get("quote", null));
+    } else {
+      settings.put("base", current.get("base", "EUR"));
+    }
+    if (current.get("amountSelector", null) != null) {
+      settings.put("amountSelector", current.get("amountSelector", null));
+    }
     for (String key :
         new String[] {
           "dateSelector",

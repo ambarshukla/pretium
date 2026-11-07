@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import type { LabInfo, LabPage, LabResult, Recipe } from "@/lib/collector";
 import { OUTCOME_TEXT, snapshotDate } from "@/lib/collector";
 import { RECIPE_KEYS } from "@/lib/recipe-code";
-import { runLab, type RunChoice } from "../repairs/actions";
+import { batchLab, runLab, type RunChoice } from "../repairs/actions";
+import { BatchStrips, type NamedBatch } from "./batch-view";
 import { CodeDiff, ExtractorNote, RecipeCode, TraceView } from "../repairs/code";
 import { ReadingsCompare, Tally } from "../repairs/compare";
 import { PageViewer, type Outline } from "../repairs/page-viewer";
@@ -54,6 +55,8 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
   const [outlinePick, setOutlinePick] = useState(0);
   const [diffA, setDiffA] = useState(0);
   const [diffB, setDiffB] = useState(-1);
+  const [batches, setBatches] = useState<NamedBatch[]>([]);
+  const [batchPending, startBatch] = useTransition();
 
   const needsKey = parser.startsWith("model:") || parser === "custom";
   const shown = runs.filter((r) => r.result.pageId === pageId);
@@ -114,6 +117,36 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
     } catch {
       setError("That is not JSON. Paste an object with keys like rowSelector and rateSelector.");
     }
+  }
+
+  function keepBatch(label: string, batch: NamedBatch["batch"]) {
+    setBatches((bs) => [...bs.filter((b) => b.label !== label), { label, batch }]);
+  }
+
+  function runBatch() {
+    if (parser.startsWith("model:")) return;
+    const label = parser === "custom" ? "your recipe" : `recipe v${parser.slice(7)}`;
+    const choice = parser === "custom" ? { recipe: custom } : { recipeVersion: Number(parser.slice(7)) };
+    setError(null);
+    startBatch(async () => {
+      const res = await batchLab(choice, key);
+      if (res.ok) keepBatch(label, res.data);
+      else setError(res.error);
+    });
+  }
+
+  function runAllKnown() {
+    setError(null);
+    startBatch(async () => {
+      for (const r of info.recipes) {
+        const res = await batchLab({ recipeVersion: r.version }, key);
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        keepBatch(`recipe v${r.version}`, res.data);
+      }
+    });
   }
 
   function run(e: React.FormEvent) {
@@ -219,6 +252,11 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
           <button type="submit" disabled={pending || !pageId}>
             {pending ? (parser.startsWith("model:") ? "The model is thinking (about a minute)…" : "Reading…") : "Run on this page"}
           </button>
+          {!parser.startsWith("model:") && (
+            <button type="button" disabled={batchPending} onClick={runBatch}>
+              {batchPending ? "Reading every page…" : `Run on every page (${info.pages.length})`}
+            </button>
+          )}
         </div>
 
         {parser.startsWith("recipe:") && selected && (
@@ -273,7 +311,21 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
       </form>
       {error && <p className="chip ERROR">{error}</p>}
 
-      <h2>3. What it read</h2>
+      <h2>3. Over every page</h2>
+      {batches.length === 0 ? (
+        <p className="muted">
+          &ldquo;Run on every page&rdquo; reads all {info.pages.length} pages with the chosen recipe and checks each
+          against the ECB&apos;s data feed, in a few seconds.{" "}
+          <button type="button" className="link" disabled={batchPending} onClick={runAllKnown}>
+            {batchPending ? "Reading…" : "Run every known recipe"}
+          </button>{" "}
+          to see when each layout of the page was in use.
+        </p>
+      ) : (
+        <BatchStrips batches={batches} current={pageId} onPick={choosePage} />
+      )}
+
+      <h2>4. What it read on this page</h2>
       {shown.length === 0 ? (
         <p className="muted">Run a parser on this page to see every value it extracts, step by step.</p>
       ) : (
@@ -325,7 +377,7 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
         </>
       )}
 
-      <h2>4. Compare two parsers as code</h2>
+      <h2>5. Compare two parsers as code</h2>
       <div className="panel">
         <div className="picker">
           <label>

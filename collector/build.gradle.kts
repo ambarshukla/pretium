@@ -38,3 +38,24 @@ tasks.register<JavaExec>("repairEval") {
         providers.gradleProperty("report").getOrElse("../data/repair-eval.md"),
     )
 }
+
+// Repair against direct extraction, model by model, on a sample of the archived pages:
+//   ./gradlew :collector:modelBench -Psdmx=<history csv> \
+//       -Pmodels=qwen2.5-coder:3b,qwen2.5-coder:7b,qwen2.5-coder:14b -Pevery=15
+// Add -Pmode=table to only ask the models to read the rates, shown the whole table.
+tasks.register<JavaExec>("modelBench") {
+    group = "verification"
+    description = "Measures selector repair against direct extraction by a model"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.pretium.collector.repair.ModelBench")
+    args(
+        providers.gradleProperty("pages").getOrElse("../data/wayback"),
+        providers.gradleProperty("sdmx").getOrElse(""),
+        providers.gradleProperty("ollama").getOrElse("http://localhost:11434"),
+        providers.gradleProperty("models").getOrElse("qwen2.5-coder:7b"),
+        providers.gradleProperty("every").getOrElse("15"),
+        providers.gradleProperty("out").getOrElse("../data/model-bench.json"),
+        providers.gradleProperty("mode").getOrElse("both"),
+        providers.gradleProperty("only").getOrElse(""),
+    )
+}

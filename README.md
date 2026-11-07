@@ -9,6 +9,11 @@ attached.
 > data. Fetched data is never committed. Sources, licences and attribution:
 > [`docs/PROVENANCE.md`](docs/PROVENANCE.md).
 
+**Live:** <https://pretium.ambarshukla.dev>. New to it? The
+[five-minute tour](https://pretium.ambarshukla.dev/tour) walks through a price and its proof,
+the operations view, a parser that repaired itself, the parser lab, and a comparison of
+language models on the same pages.
+
 ## What it does
 
 - **Collects** four real sources on their own schedules: the World Bank's *Remittance
@@ -74,3 +79,4 @@ takes a couple of minutes.
 - [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md): what was built, in order, and what the real data showed
 - [`docs/PROVENANCE.md`](docs/PROVENANCE.md): sources, licences, attribution
 - [`docs/SLO.md`](docs/SLO.md) and [`docs/RUNBOOK.md`](docs/RUNBOOK.md): what "working" means, and what to do when it is not
+- [`docs/OPERATING.md`](docs/OPERATING.md): how requests are triaged, who approves a repair or a price, and how models are adopted

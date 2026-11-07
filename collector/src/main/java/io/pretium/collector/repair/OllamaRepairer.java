@@ -91,16 +91,19 @@ public final class OllamaRepairer {
     return PROMPT.formatted(JSON.writeValueAsString(current.settings()), error, digest);
   }
 
-  public Proposal propose(
-      SourceSpec.Recipe current, String error, String digest, PageDigest.DateHint date)
-      throws IOException, InterruptedException {
-    String prompt = prompt(current, error, digest);
+  /** One reply from the model, with what it cost. */
+  public record Reply(String text, long millis, int promptTokens, int outputTokens) {}
+
+  /**
+   * Sends one prompt and asks for JSON back. Temperature 0: the same prompt gives (almost always)
+   * the same reply, so results are repeatable.
+   */
+  public Reply generate(String prompt) throws IOException, InterruptedException {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("model", model);
     body.put("prompt", prompt);
     body.put("format", "json");
     body.put("stream", false);
-    // Temperature 0: the same page and error give the same proposal, so results are repeatable.
     body.put("options", Map.of("temperature", 0, "num_ctx", 8192));
 
     long start = System.nanoTime();
@@ -118,8 +121,26 @@ public final class OllamaRepairer {
           "Ollama returned HTTP " + response.statusCode() + ": " + response.body());
     }
     JsonNode reply = json.readTree(response.body());
-    String text = reply.path("response").asString("");
-    JsonNode proposed = json.readTree(text.isBlank() ? "{}" : text);
+    return new Reply(
+        reply.path("response").asString(""),
+        millis,
+        reply.path("prompt_eval_count").asInt(0),
+        reply.path("eval_count").asInt(0));
+  }
+
+  public Proposal propose(
+      SourceSpec.Recipe current, String error, String digest, PageDigest.DateHint date)
+      throws IOException, InterruptedException {
+    String prompt = prompt(current, error, digest);
+    Reply reply = generate(prompt);
+    String text = reply.text();
+    JsonNode proposed;
+    try {
+      proposed = json.readTree(text.isBlank() ? "{}" : text);
+    } catch (RuntimeException e) {
+      // Not JSON at all: treated as a proposal of nothing, which the verifier then rejects.
+      proposed = json.readTree("{}");
+    }
 
     Map<String, String> settings = new LinkedHashMap<>();
     settings.put("base", current.get("base", "EUR"));
@@ -147,9 +168,9 @@ public final class OllamaRepairer {
     }
     return new Proposal(
         new SourceSpec.Recipe(current.version() + 1, settings),
-        millis,
-        reply.path("prompt_eval_count").asInt(0),
-        reply.path("eval_count").asInt(0),
+        reply.millis(),
+        reply.promptTokens(),
+        reply.outputTokens(),
         text,
         prompt);
   }

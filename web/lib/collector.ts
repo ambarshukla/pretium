@@ -167,6 +167,27 @@ export type LabResult = {
   trace: Trace | null;
 };
 
+export type BatchRow = {
+  pageId: string;
+  when: string;
+  ratesDate: string | null;
+  accepted: boolean;
+  read: number;
+  matched: number;
+  expected: number;
+  wrong: number;
+  error: string | null;
+};
+
+export type Batch = {
+  recipe: Recipe;
+  pages: number;
+  accepted: number;
+  wrongNumbers: number;
+  millis: number;
+  rows: BatchRow[];
+};
+
 export async function collector<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${COLLECTOR_URL}${path}`, { cache: "no-store" });

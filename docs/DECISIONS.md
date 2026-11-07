@@ -223,3 +223,37 @@ The choices that shape pretium, why they were made, and what was given up. Newes
 - **Archived copies of the page are on the server** (119 Internet Archive snapshots, 31 MB,
   mounted read-only), so the lab and the case pages show them inline, and a recipe written for
   a case can be checked there.
+
+## D-020 · Every price links to its source row, found through an index made for reading
+
+- **Choice:** each price on the comparison page (and each price held back) links to a proof
+  page with the exact row of the World Bank file it was read from, taken from the stored
+  copy again, the copy re-checked against the sha256 the price carries, and the identities
+  the checks use recomputed from the cells.
+- **Why an index:** the file is about 50 MB of compressed XML and a row can only be found by
+  reading the sheet from the top: about 30 s for a recent row. `RowIndex` reads it once per
+  file (about 45 s, in the background after start-up), writes the rows as tab-separated text
+  next to the evidence, and keeps two sorted arrays of id and byte offset in memory (about
+  3 MB for 204,000 rows). A lookup is a binary search and one read: about 10 ms.
+- **The index is not evidence:** it is a copy for reading, rebuilt whenever it is missing.
+  The proof page hashes the original file, not the index, and the row number it shows is
+  the original sheet's, so anyone can check it by hand in a spreadsheet.
+- **Rejected:** keeping every row in memory (the collector has about 300 MB of heap on a
+  shared 4 GB host); a database table of raw rows (a second copy of the source with its own
+  schema to keep in step, for a page that needs one row at a time).
+
+## D-021 · A model proposes selectors; it never types a published number (now measured)
+
+- **Choice:** unchanged since the repair loop was built: when the ECB page's parser breaks, a
+  model proposes CSS selectors, code reads the numbers with them, and the verifier accepts
+  them only if every number equals the reference channel exactly.
+- **The measurement:** `ModelBench` (BUILD_LOG, 2026-11-06) runs both approaches on the same
+  pages and digests. Repair published no wrong numbers with either model; reading directly
+  would have published 34 (3B) and 2 (7B), and dates for pages that do not show one. Neither
+  is visible in the output itself: a wrong rate is formatted exactly like a right one.
+- **Why it matters beyond this page:** most sources have no second channel to check against.
+  Selectors can be checked once, on a page where a reference exists, and then reused; typed
+  numbers have to be trusted every time.
+- **How a model is changed:** the same way, on a branch, re-running `ModelBench` and
+  `RepairEval` on the archived pages, and adopted only if it repairs at least as many pages
+  and publishes nothing wrong.

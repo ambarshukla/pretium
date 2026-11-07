@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { apiOrNull, findings, num, period, type Finding } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,9 @@ type Quality = {
 };
 
 type Quarantined = {
+  sourceId: string;
   sourceRecordId: string;
+  evidenceSha256: string;
   period: string;
   sendName: string;
   receiveName: string;
@@ -362,6 +365,7 @@ export default async function OpsPage() {
               <th>Provider</th>
               <th className="n">Total</th>
               <th>Why</th>
+              <th>Check it</th>
             </tr>
           </thead>
           <tbody>
@@ -383,11 +387,20 @@ export default async function OpsPage() {
                       </div>
                     ))}
                 </td>
+                <td className="small">
+                  <Link href={`/proof/${q.sourceId}/${q.evidenceSha256}/${q.sourceRecordId}?amount=${q.amountUsd}`}>
+                    the row, and the sums →
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="muted small">
+        Each held-back price links to the row of the source file it came from, with the arithmetic the check did, so a
+        person can see why it failed and whether the check or the source is wrong.
+      </p>
 
       <h2>Recent runs</h2>
       <div className="panel table-wrap">

@@ -154,4 +154,23 @@ class RecipeVerifierTest {
     assertThat(v.wrong()).anyMatch(w -> w.startsWith("USD=1.1179 (reference "));
     assertThat(v.error()).endsWith("values differ from the reference");
   }
+
+  /**
+   * The same trap for the program that finds the date for a repair: the news caption's date comes
+   * first on the page, the rates' date is the last one before the table.
+   */
+  @Test
+  void theDateForARepairIsTheOneJustBeforeTheTable() throws Exception {
+    PageDigest.DateHint hint = PageDigest.dateHint(fixture("ecb-reference-2026-11-03.html"));
+
+    assertThat(hint.text()).contains("3 November 2026").doesNotContain("29 October");
+    Map<String, String> repaired = new HashMap<>(RECIPE);
+    repaired.put("dateSelector", hint.selector());
+    repaired.put("dateRegex", hint.regex());
+    RecipeVerifier.Verdict v =
+        new RecipeVerifier(ReferenceTruth.fromSdmxCsv(fixture("ecb-sdmx-2026-11-03.csv")))
+            .verify(fixture("ecb-reference-2026-11-03.html"), new SourceSpec.Recipe(2, repaired));
+    assertThat(v.date()).isEqualTo(LocalDate.of(2026, 11, 3));
+    assertThat(v.accepted()).isTrue();
+  }
 }

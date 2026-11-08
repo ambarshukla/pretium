@@ -68,8 +68,11 @@ Collected through two channels, which must agree:
 - **Why the CNB:** a second publisher with a public page *and* a structured channel carrying
   the same numbers, so a scraper repair can be checked exactly, as with the ECB. Other central
   banks were considered: Norges Bank's page builds its table in the browser (the HTML has no
-  rates), Danmarks Nationalbank's has no table, and the Reserve Bank of Australia's and the
-  Bank of Canada's are candidates for later.
+  rates), and Danmarks Nationalbank's has no table. The Reserve Bank of Australia's page and
+  data file are reusable under CC BY 4.0, but the data file credits its main pair (AUD/USD) to
+  WM/Reuters, and the RBA's terms exclude third-party material from that licence: not used.
+  The Bank of Canada's page names currencies in words ("Australian dollar") rather than codes,
+  so it needs a name-to-code table first: a candidate for later.
 
 ### ISO 4217 currency codes (reference table, not collected)
 
@@ -148,3 +151,7 @@ verbatim (the description, keywords and contact fields are left out).
 4217 lists one and three for the countries in that table (SIX, downloaded 5 November 2026).
 The benchmark tests use real survey records from Q2 2016, Q4 2016 and Q3 2025 (record ids in
 the test code) and the ECB's reference rates for the days they were observed.
+
+`collector/src/main/resources/repair/cnb-fixing-html.json` is the same kind of casebook for 29
+archived copies of the CNB's fixing page (2006 to 2025, from the Internet Archive), each checked
+against the CNB's yearly text file for that year. Rates are Source: the CNB.

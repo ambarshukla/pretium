@@ -69,10 +69,10 @@ public final class RecipeVerifier {
         new SourceSpec(
             "candidate",
             "candidate",
-            "ECB",
-            "ECB",
+            "candidate",
+            "candidate",
             null,
-            "https://www.ecb.europa.eu/",
+            "https://localhost/",
             null,
             SourceSpec.Format.HTML_RATE_TABLE,
             "0 0 0 * * *",
@@ -114,11 +114,12 @@ public final class RecipeVerifier {
     int matched = 0;
     List<String> wrong = new ArrayList<>();
     for (ReferenceRateObserved r : read) {
-      BigDecimal truthRate = expected.get(r.quote());
+      BigDecimal truthRate = expected.get(ReferenceTruth.rowCurrency(r));
       if (truthRate != null && truthRate.compareTo(r.rate()) == 0) {
         matched++;
       } else {
-        wrong.add(r.quote() + "=" + r.rate() + " (reference " + truthRate + ")");
+        wrong.add(
+            ReferenceTruth.rowCurrency(r) + "=" + r.rate() + " (reference " + truthRate + ")");
       }
     }
     // 80%, not 100%: the SDMX API also carries indicative rates (ARS, DZD, MAD, TWD in 2017)
@@ -147,7 +148,7 @@ public final class RecipeVerifier {
       List<ReferenceRateObserved> read, Map<String, BigDecimal> expected) {
     Map<String, BigDecimal> byCurrency = new TreeMap<>();
     for (ReferenceRateObserved r : read) {
-      byCurrency.putIfAbsent(r.quote(), r.rate());
+      byCurrency.putIfAbsent(ReferenceTruth.rowCurrency(r), r.rate());
     }
     TreeSet<String> currencies = new TreeSet<>(byCurrency.keySet());
     currencies.addAll(expected.keySet());

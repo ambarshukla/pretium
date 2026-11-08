@@ -257,3 +257,30 @@ The choices that shape pretium, why they were made, and what was given up. Newes
 - **How a model is changed:** the same way, on a branch, re-running `ModelBench` and
   `RepairEval` on the archived pages, and adopted only if it repairs at least as many pages
   and publishes nothing wrong.
+
+## D-022 · A second publisher, and reconciliation per publisher
+
+- **Choice:** the Czech National Bank's daily fixing, collected as a text file
+  (`cnb-fixing-txt`, the reference) and as its public web page (`cnb-fixing-html`, scraped by
+  the same HTML extractor as the ECB's page, with its own recipe).
+- **Why the CNB:** the repair loop only works where a page has a structured channel with the
+  same numbers, so a repair can be checked exactly. Candidates were checked for that and for
+  their terms (7 November 2026): Norges Bank's page builds its table in the browser, so the
+  HTML has no rates; Danmarks Nationalbank's page has no table; the Reserve Bank of
+  Australia's data file credits its main pair (AUD/USD) to WM/Reuters, and the RBA's terms
+  exclude third-party material from reuse; the Bank of Canada's page names currencies in
+  words, not codes, which the extractor would need a name table for. The CNB has a static
+  table, a text file with the same numbers, permissive terms, and twenty years of archived
+  copies across two addresses and several redesigns.
+- **What the page added to the extractor:** two optional recipe settings, not new code per
+  source. `quote: CZK` for a table priced in the home currency (the ECB's is `base: EUR`), and
+  `amountSelector` for rates quoted per 100 or 1,000 units, divided out exactly (a power of ten
+  moves the decimal point; anything else is refused).
+- **Reconciliation per publisher:** each channel is compared only with its own publisher's
+  reference (`pretium.reconcile.groups`). On 3 November 2026 the CNB fixed EUR/CZK at 24.340
+  and the ECB at 24.343: two banks, two fixing times, both right. Comparing across publishers
+  would have raised that as a break every day, and flagged every ECB currency the CNB does not
+  quote as missing.
+- **Rejected:** a cross-publisher tolerance (any threshold is arbitrary, and it would hide a
+  real parsing error of the same size); converting the CNB's rates to per-euro (a division,
+  so the stored number would no longer be the published one).

@@ -57,6 +57,26 @@ public class Lab {
   static final String TRUTH_SOURCE = "ecb-sdmx-exr";
 
   private static final Pattern SNAPSHOT = Pattern.compile("\\d{14}");
+
+  /**
+   * An archived copy of another source's page: "archive:<snapshot>@<source>". Those copies live in
+   * a subfolder of the archive folder named after the source id (the ECB's are at its top level).
+   */
+  private static final Pattern OTHER_ARCHIVE =
+      Pattern.compile("archive:(\\d{14})@([a-z0-9]+(?:-[a-z0-9]+)*)");
+
+  /**
+   * For each scraped page, its publisher's structured channel: the raw-store folder, the file
+   * extension and the format its answer key is read in.
+   */
+  record Channel(String source, String extension, SourceSpec.Format format) {}
+
+  static final Map<String, Channel> CHANNELS =
+      Map.of(
+          SOURCE,
+          new Channel(TRUTH_SOURCE, ".csv", SourceSpec.Format.ECB_SDMX_CSV),
+          "cnb-fixing-html",
+          new Channel("cnb-fixing-txt", ".txt", SourceSpec.Format.CNB_FIXING_TXT));
   private static final Pattern SHA = Pattern.compile("[0-9a-f]{64}");
   private static final DateTimeFormatter SNAPSHOT_TIME =
       DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -192,6 +212,8 @@ public class Lab {
 
   private ReferenceTruth truth;
   private List<String> truthFiles = List.of();
+  private final Map<String, ReferenceTruth> otherTruth = new java.util.HashMap<>();
+  private final Map<String, List<String>> otherTruthFiles = new java.util.HashMap<>();
 
   public Lab(
       RawStore raw,
@@ -249,6 +271,11 @@ public class Lab {
     if (pageId == null) {
       return Optional.empty();
     }
+    java.util.regex.Matcher other = OTHER_ARCHIVE.matcher(pageId);
+    if (other.matches() && archiveDir != null && CHANNELS.containsKey(other.group(2))) {
+      Path p = archiveDir.resolve(other.group(2)).resolve(other.group(1) + ".html");
+      return Files.isRegularFile(p) ? Optional.of(p) : Optional.empty();
+    }
     if (pageId.startsWith("archive:") && archiveDir != null) {
       String ts = pageId.substring("archive:".length());
       if (SNAPSHOT.matcher(ts).matches()) {
@@ -271,8 +298,43 @@ public class Lab {
   }
 
   /** The archived copy of a repair case's page, if this server has the archive. */
-  public Optional<Path> archived(String snapshot) throws IOException {
-    return file("archive:" + snapshot);
+  public Optional<Path> archived(String source, String snapshot) throws IOException {
+    return file(
+        source.equals(SOURCE) ? "archive:" + snapshot : "archive:" + snapshot + "@" + source);
+  }
+
+  /**
+   * The verifier for another source's page, over every file of its structured channel collected so
+   * far. The CNB's first collection loads the current year, so older archived copies of its page
+   * have no answer key on a server until earlier yearly files are added to its raw store.
+   */
+  public synchronized RecipeVerifier verifier(String pageSource) throws IOException {
+    if (pageSource.equals(SOURCE)) {
+      return verifier();
+    }
+    Channel channel = CHANNELS.get(pageSource);
+    if (channel == null) {
+      throw new IllegalArgumentException("no structured channel known for " + pageSource);
+    }
+    List<Path> files;
+    Path dir = rawDir.resolve(channel.source());
+    if (!Files.isDirectory(dir)) {
+      files = List.of();
+    } else {
+      try (Stream<Path> s = Files.list(dir)) {
+        files = s.filter(p -> p.toString().endsWith(channel.extension())).sorted().toList();
+      }
+    }
+    List<String> names = files.stream().map(p -> p.getFileName().toString()).toList();
+    if (!names.equals(otherTruthFiles.get(pageSource))) {
+      try {
+        otherTruth.put(pageSource, ReferenceTruth.fromFiles(channel.format(), files));
+      } catch (ExtractionException e) {
+        throw new IOException("cannot load the reference rates: " + e.getMessage(), e);
+      }
+      otherTruthFiles.put(pageSource, names);
+    }
+    return new RecipeVerifier(otherTruth.get(pageSource));
   }
 
   /** Models the local model runner has, or none if no runner is configured or reachable. */

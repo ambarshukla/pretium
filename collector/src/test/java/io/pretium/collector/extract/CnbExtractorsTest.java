@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
  * (the fixing of 6 November; see docs/PROVENANCE.md). Like the three ECB channels, the two must
  * yield identical numbers: that is what makes a repaired recipe for the page checkable.
  */
-class CnbExtractorsTest {
+public class CnbExtractorsTest {
 
-  static final SourceSpec.Recipe PAGE_RECIPE =
+  public static final SourceSpec.Recipe PAGE_RECIPE =
       new SourceSpec.Recipe(
           1,
           Map.of(

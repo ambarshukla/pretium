@@ -25,6 +25,8 @@ dependencies {
 // of the build; run by hand:
 //   ./gradlew :collector:repairEval -Ppages=../data/wayback -Psdmx=<history csv> \
 //       -Pmodel=qwen2.5-coder:7b -Preport=../data/repair-eval.md
+// For the CNB's page: -Psource=cnb-fixing-html -Ppages=../data/cnb-fixing-html -Psdmx=../data/cnb-year
+// (-Psdmx names the structured channel's files, whichever the publisher's format)
 tasks.register<JavaExec>("repairEval") {
     group = "verification"
     description = "Replays the ECB page's archived history through selector repair"
@@ -36,6 +38,7 @@ tasks.register<JavaExec>("repairEval") {
         providers.gradleProperty("ollama").getOrElse("http://localhost:11434"),
         providers.gradleProperty("model").getOrElse("qwen2.5-coder:7b"),
         providers.gradleProperty("report").getOrElse("../data/repair-eval.md"),
+        providers.gradleProperty("source").getOrElse("ecb-reference-html"),
     )
 }
 
@@ -57,5 +60,6 @@ tasks.register<JavaExec>("modelBench") {
         providers.gradleProperty("out").getOrElse("../data/model-bench.json"),
         providers.gradleProperty("mode").getOrElse("both"),
         providers.gradleProperty("only").getOrElse(""),
+        providers.gradleProperty("source").getOrElse("ecb-reference-html"),
     )
 }

@@ -173,4 +173,62 @@ class RecipeVerifierTest {
     assertThat(v.date()).isEqualTo(LocalDate.of(2026, 11, 3));
     assertThat(v.accepted()).isTrue();
   }
+
+  /**
+   * The CNB writes "06 Nov 2026", not "6 November 2026": the date finder knows that shape too, and
+   * a recipe given only its date settings reads the page and is accepted.
+   */
+  @Test
+  void theDateFinderKnowsTheCnbShortMonths() throws Exception {
+    PageDigest.DateHint hint = PageDigest.dateHint(fixture("cnb-fixing-2026-11-06.html"));
+
+    assertThat(hint.format()).isEqualTo("d MMM yyyy");
+    assertThat(hint.text()).contains("06 Nov 2026");
+    Map<String, String> repaired =
+        new HashMap<>(io.pretium.collector.extract.CnbExtractorsTest.PAGE_RECIPE.settings());
+    repaired.put("dateSelector", hint.selector());
+    repaired.put("dateFormat", hint.format());
+    repaired.put("dateRegex", hint.regex());
+    RecipeVerifier.Verdict v =
+        cnbVerifier()
+            .verify(fixture("cnb-fixing-2026-11-06.html"), new SourceSpec.Recipe(2, repaired));
+    assertThat(v.accepted()).isTrue();
+  }
+
+  static RecipeVerifier cnbVerifier() throws Exception {
+    return new RecipeVerifier(
+        ReferenceTruth.fromFiles(
+            SourceSpec.Format.CNB_FIXING_TXT,
+            java.util.List.of(fixture("cnb-fixing-2026-11-06.txt"))));
+  }
+
+  @Test
+  void theCnbPageIsJudgedAgainstTheCnbTextFile() throws Exception {
+    RecipeVerifier.Verdict v =
+        cnbVerifier()
+            .verify(
+                fixture("cnb-fixing-2026-11-06.html"),
+                new SourceSpec.Recipe(
+                    1, io.pretium.collector.extract.CnbExtractorsTest.PAGE_RECIPE.settings()));
+
+    assertThat(v.accepted()).isTrue();
+    assertThat(v.date()).isEqualTo(LocalDate.of(2026, 11, 6));
+    assertThat(v.matched()).isEqualTo(30);
+  }
+
+  @Test
+  void aCnbRecipeThatIgnoresTheAmountColumnReadsWrongNumbers() throws Exception {
+    // The trap in this table: "100 HUF = 6.693 CZK". Without the amount, 6.693 korunas per forint
+    // is a hundred times too much, and every currency quoted per 100 or 1000 units is wrong.
+    Map<String, String> noAmount =
+        new HashMap<>(io.pretium.collector.extract.CnbExtractorsTest.PAGE_RECIPE.settings());
+    noAmount.remove("amountSelector");
+    RecipeVerifier.Verdict v =
+        cnbVerifier()
+            .verify(fixture("cnb-fixing-2026-11-06.html"), new SourceSpec.Recipe(2, noAmount));
+
+    assertThat(v.accepted()).isFalse();
+    assertThat(v.wrong()).anySatisfy(w -> assertThat(w).startsWith("HUF=6.693"));
+    assertThat(v.wrongCount()).isEqualTo(9);
+  }
 }

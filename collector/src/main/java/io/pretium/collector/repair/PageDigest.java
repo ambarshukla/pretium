@@ -18,10 +18,33 @@ public final class PageDigest {
 
   static final int MAX_CHARS = 6_000;
 
-  private static final Pattern DATE =
-      Pattern.compile(
-          "\\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|"
-              + "November|December) \\d{4}");
+  /** A way of writing a date: how to spot it, and the recipe settings that read it. */
+  private record Shape(Pattern find, String format, String regex) {}
+
+  private static final String SHORT_MONTH = "(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)";
+
+  /**
+   * The date shapes the hint knows, tried in this order over the whole page: a later shape is only
+   * used when no element has an earlier one. The first is the ECB's ("26 January 2017"), so its
+   * pages get exactly the hints they always got. The CNB's page has written "04 Jan 2019" since
+   * 2010, and "24.Jul 2009" before that.
+   */
+  private static final java.util.List<Shape> SHAPES =
+      java.util.List.of(
+          new Shape(
+              Pattern.compile(
+                  "\\d{1,2} (?:January|February|March|April|May|June|July|August|September|"
+                      + "October|November|December) \\d{4}"),
+              "d MMMM yyyy",
+              "(\\d{1,2} [A-Za-z]+ \\d{4})"),
+          new Shape(
+              Pattern.compile("\\b\\d{1,2} " + SHORT_MONTH + " \\d{4}"),
+              "d MMM yyyy",
+              "(\\d{1,2} [A-Za-z]{3} \\d{4})"),
+          new Shape(
+              Pattern.compile("\\b\\d{1,2}\\." + SHORT_MONTH + " \\d{4}"),
+              "d.MMM yyyy",
+              "(\\d{1,2}\\.[A-Za-z]{3} \\d{4})"));
 
   private PageDigest() {}
 
@@ -43,6 +66,17 @@ public final class PageDigest {
 
   public static DateHint dateHint(Path page) throws IOException {
     Document doc = Jsoup.parse(page.toFile(), StandardCharsets.UTF_8.name());
+    for (Shape shape : SHAPES) {
+      DateHint hint = dateHint(doc, shape);
+      if (hint != null) {
+        return hint;
+      }
+    }
+    return null;
+  }
+
+  private static DateHint dateHint(Document doc, Shape shape) {
+    Pattern date = shape.find();
     Element first = null;
     Element beforeTable = null;
     boolean table = false;
@@ -51,7 +85,7 @@ public final class PageDigest {
         table = true;
         break;
       }
-      if (DATE_TAGS.contains(e.tagName()) && DATE.matcher(e.ownText()).find()) {
+      if (DATE_TAGS.contains(e.tagName()) && date.matcher(e.ownText()).find()) {
         if (first == null) {
           first = e;
         }
@@ -64,8 +98,7 @@ public final class PageDigest {
     }
     String tag = e.tagName();
     String selector = doc.selectFirst(tag) == e ? tag : e.cssSelector();
-    return new DateHint(
-        selector, "d MMMM yyyy", "(\\d{1,2} [A-Za-z]+ \\d{4})", e.ownText().strip());
+    return new DateHint(selector, shape.format(), shape.regex(), e.ownText().strip());
   }
 
   public static String of(Path page) throws IOException {

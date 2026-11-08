@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CnbFixingTxtExtractor implements Extractor {
 
-  static final String HOME = "CZK";
+  public static final String HOME = "CZK";
 
   private static final DateTimeFormatter DAILY_DATE =
       DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH);

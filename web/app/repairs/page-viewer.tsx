@@ -140,7 +140,7 @@ export function PageViewer({
             · <a href={display.archiveUrl}>this copy at the Internet Archive</a>
           </>
         )}
-        <span className="muted"> · Source: ECB</span>
+        <span className="muted"> · Source: {pageId.includes("@") ? "CNB" : "ECB"}</span>
       </p>
       {error && <p className="chip ERROR">{error}</p>}
       {display?.selectorError && <p className="chip ERROR">Not a valid selector: {display.selectorError}</p>}

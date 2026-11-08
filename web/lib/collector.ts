@@ -9,7 +9,7 @@ export type Reading = { currency: string; read: number | null; reference: number
 export type Recipe = Record<string, string>;
 
 export type Attempt = {
-  by: "recipe" | "library" | "model" | "human";
+  by: "recipe" | "library" | "date-fix" | "model" | "human";
   recipeVersion: number;
   recipe: Recipe;
   accepted: boolean;
@@ -88,6 +88,7 @@ export type LabInfo = {
   inUse: number;
   cases: Record<string, RepairCase["outcome"]>;
   models: string[];
+  sources: string[];
 };
 
 export type DateStep = {

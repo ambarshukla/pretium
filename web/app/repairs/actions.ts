@@ -36,8 +36,9 @@ export async function runLab(pageId: string, choice: RunChoice, key: string): Pr
 export async function batchLab(
   choice: { recipeVersion: number } | { recipe: Recipe },
   key: string,
+  source?: string,
 ): Promise<Posted<Batch>> {
-  return collectorPost<Batch>("/api/v1/lab/batch", choice, key);
+  return collectorPost<Batch>("/api/v1/lab/batch", { ...choice, source }, key);
 }
 
 /**

@@ -25,6 +25,7 @@ type Params = Promise<{ source: string; snapshot: string }>;
 function label(a: Attempt, i: number): string {
   if (a.by === "recipe") return `recipe v${a.recipeVersion}, in use`;
   if (a.by === "library") return `recipe v${a.recipeVersion}, earlier`;
+  if (a.by === "date-fix") return `date settings only (no model)`;
   if (a.by === "model") return `model proposal ${i}`;
   return "written by a person";
 }

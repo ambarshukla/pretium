@@ -155,3 +155,7 @@ the test code) and the ECB's reference rates for the days they were observed.
 `collector/src/main/resources/repair/cnb-fixing-html.json` is the same kind of casebook for 29
 archived copies of the CNB's fixing page (2006 to 2025, from the Internet Archive), each checked
 against the CNB's yearly text file for that year. Rates are Source: the CNB.
+
+`cnb-fixing-2025-07-01-archived.html` is the CNB's fixing page as the Internet Archive captured it
+on 1 July 2025 (snapshot 20250701172207), unaltered. `cnb-fixing-year-2025-07-01-excerpt.txt` is
+two verbatim lines of the CNB's 2025 yearly file: the header and the fixing of 1 July 2025.

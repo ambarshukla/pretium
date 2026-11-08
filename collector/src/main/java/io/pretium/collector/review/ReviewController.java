@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -109,7 +110,8 @@ public class ReviewController {
       List<SourceSpec.Recipe> recipes,
       int inUse,
       Map<String, String> cases,
-      List<String> models) {}
+      List<String> models,
+      List<String> sources) {}
 
   /** A page to show, with the recipe whose matches to outline: a known version, or one typed. */
   public record ViewRequest(String pageId, Integer recipeVersion, Map<String, String> recipe) {}
@@ -119,7 +121,16 @@ public class ReviewController {
    * wrote.
    */
   public record RunRequest(
-      String pageId, Integer recipeVersion, String model, Map<String, String> recipe) {}
+      String pageId,
+      Integer recipeVersion,
+      String model,
+      Map<String, String> recipe,
+      String source) {
+    public RunRequest(
+        String pageId, Integer recipeVersion, String model, Map<String, String> recipe) {
+      this(pageId, recipeVersion, model, recipe, null);
+    }
+  }
 
   @GetMapping("/api/v1/repairs")
   public Listing list() throws IOException {
@@ -246,22 +257,28 @@ public class ReviewController {
   }
 
   @GetMapping("/api/v1/lab")
-  public LabInfo lab() throws IOException {
+  public LabInfo lab(@RequestParam(value = "source", required = false) String source)
+      throws IOException {
+    String id = source == null || source.isBlank() ? Lab.SOURCE : source;
+    if (!lab.sources().contains(id)) {
+      throw notFound("no such source");
+    }
     Map<String, String> outcomes = new LinkedHashMap<>();
     cases
-        .casebook(Lab.SOURCE)
+        .casebook(id)
         .ifPresent(b -> b.cases().forEach(c -> outcomes.put(c.snapshot(), c.outcome())));
-    SourceSpec spec = sources.find(Lab.SOURCE).orElseThrow(() -> notFound("no spec"));
+    SourceSpec spec = sources.find(id).orElseThrow(() -> notFound("no spec"));
     return new LabInfo(
-        Lab.SOURCE,
+        id,
         spec.url(),
         true,
         key != null,
-        lab.pages(),
-        cases.knownRecipes(Lab.SOURCE),
+        lab.pages(id),
+        cases.knownRecipes(id),
         spec.recipeVersion(),
         outcomes,
-        key == null ? List.of() : lab.models());
+        key == null ? List.of() : lab.models(),
+        lab.sources());
   }
 
   /**
@@ -274,11 +291,12 @@ public class ReviewController {
       throw bad("empty request");
     }
     Path page = lab.file(req.pageId()).orElseThrow(() -> notFound("no such page"));
-    SourceSpec spec = sources.find(Lab.SOURCE).orElseThrow(() -> notFound("no spec"));
+    String source = Lab.sourceOf(req.pageId());
+    SourceSpec spec = sources.find(source).orElseThrow(() -> notFound("no spec"));
     SourceSpec.Recipe outline = null;
     if (req.recipeVersion() != null) {
       outline =
-          cases.knownRecipes(Lab.SOURCE).stream()
+          cases.knownRecipes(source).stream()
               .filter(k -> k.version() == req.recipeVersion())
               .findFirst()
               .orElseThrow(() -> notFound("no such recipe version"));
@@ -304,9 +322,10 @@ public class ReviewController {
       throw bad("choose exactly one parser: recipeVersion, model or recipe");
     }
     Path page = lab.file(req.pageId()).orElseThrow(() -> notFound("no such page"));
+    String source = Lab.sourceOf(req.pageId());
     if (req.recipeVersion() != null) {
       SourceSpec.Recipe r =
-          cases.knownRecipes(Lab.SOURCE).stream()
+          cases.knownRecipes(source).stream()
               .filter(k -> k.version() == req.recipeVersion())
               .findFirst()
               .orElseThrow(() -> notFound("no such recipe version"));
@@ -315,7 +334,7 @@ public class ReviewController {
     requireKey(given);
     if (req.model() != null) {
       SourceSpec.Recipe inUse =
-          sources.find(Lab.SOURCE).map(SourceSpec::recipe).orElseThrow(() -> notFound("no spec"));
+          sources.find(source).map(SourceSpec::recipe).orElseThrow(() -> notFound("no spec"));
       return lab.runModel(req.pageId(), page, req.model(), inUse);
     }
     return lab.runRecipe(
@@ -334,15 +353,20 @@ public class ReviewController {
     if (req == null || (req.recipeVersion() == null) == (req.recipe() == null)) {
       throw bad("choose exactly one recipe: recipeVersion or recipe");
     }
+    String source = req.source() == null || req.source().isBlank() ? Lab.SOURCE : req.source();
+    if (!lab.sources().contains(source)) {
+      throw notFound("no such source");
+    }
     if (req.recipeVersion() != null) {
       return lab.batch(
-          cases.knownRecipes(Lab.SOURCE).stream()
+          source,
+          cases.knownRecipes(source).stream()
               .filter(k -> k.version() == req.recipeVersion())
               .findFirst()
               .orElseThrow(() -> notFound("no such recipe version")));
     }
     requireKey(given);
-    return lab.batch(new SourceSpec.Recipe(0, clean(req.recipe())));
+    return lab.batch(source, new SourceSpec.Recipe(0, clean(req.recipe())));
   }
 
   @GetMapping("/api/v1/lab/bench")

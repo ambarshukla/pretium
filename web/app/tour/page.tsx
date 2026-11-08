@@ -46,13 +46,18 @@ const STEPS: Step[] = [
     link: "Operations",
     what: (
       <>
-        Four sources on their own schedules: the World Bank survey, and the ECB&apos;s reference rates through three
-        channels (an API, an XML file, and the public web page, scraped).
+        Six sources on their own schedules: the World Bank survey, the ECB&apos;s reference rates through three
+        channels (an API, an XML file, and the public web page, scraped), and the Czech National Bank&apos;s fixing
+        through two (a text file and its web page, scraped by the same code with a different recipe).
       </>
     ),
     try: [
       <>&ldquo;Sources&rdquo;: when each was last collected, and whether it is fresh.</>,
       <>&ldquo;Three channels, one number&rdquo;: the same rate read three ways must agree to the last digit.</>,
+      <>
+        &ldquo;A second publisher&rdquo;: the same check for the CNB, and why its EUR/CZK differs from the ECB&apos;s
+        without either being wrong.
+      </>,
       <>&ldquo;Held back&rdquo;: prices that failed a check and were not published.</>,
     ],
     notice: (

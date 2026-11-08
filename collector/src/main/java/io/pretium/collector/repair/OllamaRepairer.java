@@ -24,7 +24,7 @@ public final class OllamaRepairer {
 
   private static final String PROMPT =
       """
-      You maintain a web scraper. It reads a table of euro exchange rates from a web page using
+      You maintain a web scraper. It reads a table of %s from a web page using
       CSS selectors (as understood by the Java library jsoup). The page's layout has changed and
       the current recipe no longer works.
 
@@ -51,7 +51,7 @@ public final class OllamaRepairer {
         "rateSelector":     CSS selector, relative to a row, for the rate number
         "dateRegex":        only if the date is part of longer text: a Java regex whose first
                             group captures just the date; otherwise null
-      Do not include any rates or other values from the page, only selectors.
+      %sDo not include any rates or other values from the page, only selectors.
       """;
 
   private final HttpClient http =
@@ -88,7 +88,22 @@ public final class OllamaRepairer {
    * The prompt for a page: the recipe in use, why it failed, and the part of the page that matters.
    */
   public static String prompt(SourceSpec.Recipe current, String error, String digest) {
-    return PROMPT.formatted(JSON.writeValueAsString(current.settings()), error, digest);
+    // For the ECB page this is word for word the prompt the published measurements used.
+    String what =
+        current.get("quote", null) == null
+            ? "euro exchange rates"
+            : "exchange rates priced in " + current.get("quote", null);
+    String amountKey =
+        current.get("amountSelector", null) == null
+            ? ""
+            : """
+              "amountSelector":   CSS selector, relative to a row, for the number of units the
+                                  rate is for (such as 1, 100 or 1000)
+            """
+                .stripIndent()
+                .indent(2);
+    return PROMPT.formatted(
+        what, JSON.writeValueAsString(current.settings()), error, digest, amountKey);
   }
 
   /** One reply from the model, with what it cost. */
@@ -143,7 +158,12 @@ public final class OllamaRepairer {
     }
 
     Map<String, String> settings = new LinkedHashMap<>();
-    settings.put("base", current.get("base", "EUR"));
+    // Which side of the pair the table's currency is on is a fact about the source: kept.
+    if (current.get("quote", null) != null) {
+      settings.put("quote", current.get("quote", null));
+    } else {
+      settings.put("base", current.get("base", "EUR"));
+    }
     for (String key :
         new String[] {
           "dateSelector",
@@ -151,8 +171,12 @@ public final class OllamaRepairer {
           "rowSelector",
           "currencySelector",
           "rateSelector",
-          "dateRegex"
+          "dateRegex",
+          "amountSelector"
         }) {
+      if (key.equals("amountSelector") && current.get(key, null) == null) {
+        continue; // the table has no amount column
+      }
       JsonNode value = proposed.path(key);
       if (value.isString() && !value.asString().isBlank()) {
         settings.put(key, value.asString());

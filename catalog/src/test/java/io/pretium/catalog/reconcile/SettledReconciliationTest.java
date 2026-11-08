@@ -39,7 +39,7 @@ class SettledReconciliationTest {
     final List<LocalDate> reconciled = new ArrayList<>();
 
     Recording() {
-      super(null, "ecb-sdmx-exr");
+      super(null, new ReconcileProperties(null, null));
     }
 
     @Override

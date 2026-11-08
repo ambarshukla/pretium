@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ACTION_TEXT, collector, OUTCOME_TEXT, snapshotDate, type Listing } from "@/lib/collector";
+import { ACTION_TEXT, collector, OUTCOME_TEXT, PUBLISHER, snapshotDate, type Listing } from "@/lib/collector";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +18,17 @@ export default async function RepairsPage() {
   const cases = listing.cases;
   const open = cases.filter((c) => c.outcome === "HUMAN_NEEDED" && !c.decision);
   const unconfirmed = cases.filter((c) => c.outcome === "HEALED" && !c.decision);
+  const sources = [...new Set(cases.map((c) => c.source))].sort();
 
   return (
     <>
       <h1>Repairs</h1>
       <p className="lede">
-        When the ECB redesigns its rates page, the recipe that reads it breaks. A local model then proposes a new
-        one, and a program checks every number the proposal reads against the ECB&apos;s own data feed for that day.
-        Only an exact match is accepted. This page lists every time that happened, so a person can check the
-        machine&apos;s work. Where nothing worked, it asks for a person.
+        When a central bank redesigns its rates page, the recipe that reads it breaks. A local model then proposes a new
+        one, and a program checks every number the proposal reads against the bank&apos;s own data feed for that day
+        (for the ECB its SDMX API, for the Czech National Bank its text file). Only an exact match is accepted. This
+        page lists every time that happened, so a person can check the machine&apos;s work. Where nothing worked, it
+        asks for a person.
       </p>
 
       <div className="stats">
@@ -48,49 +50,58 @@ export default async function RepairsPage() {
         </div>
       </div>
 
-      <div className="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Page as archived</th>
-              <th>Rates for</th>
-              <th>What happened</th>
-              <th>Recipe</th>
-              <th className="n">Model proposals</th>
-              <th>Review</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((c) => (
-              <tr key={`${c.source}/${c.snapshot}`}>
-                <td>
-                  <Link href={`/repairs/${c.source}/${c.snapshot}`}>{snapshotDate(c.snapshot)}</Link>
-                </td>
-                <td>{c.ratesDate === "null" ? <span className="muted">unknown</span> : c.ratesDate}</td>
-                <td>
-                  <span className={`chip ${c.outcome === "HUMAN_NEEDED" ? "ERROR" : c.outcome === "HEALED" ? "ok" : "INFO"}`}>
-                    {OUTCOME_TEXT[c.outcome]}
-                  </span>
-                </td>
-                <td className="mono">
-                  v{c.fromVersion}
-                  {c.toVersion !== null ? ` → v${c.toVersion}` : ""}
-                </td>
-                <td className="n">{c.proposals}</td>
-                <td>
-                  {c.decision ? (
-                    <span className="chip ok">{ACTION_TEXT[c.decision.action]}</span>
-                  ) : c.outcome === "HUMAN_NEEDED" ? (
-                    <span className="chip WARN">needs a decision</span>
-                  ) : (
-                    <span className="muted small">not reviewed</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {sources.map((source) => (
+        <section key={source}>
+          <h2>{PUBLISHER[source]?.page ?? source}</h2>
+          <div className="panel table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Page as archived</th>
+                  <th>Rates for</th>
+                  <th>What happened</th>
+                  <th>Recipe</th>
+                  <th className="n">Model proposals</th>
+                  <th>Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cases
+                  .filter((c) => c.source === source)
+                  .map((c) => (
+                    <tr key={`${c.source}/${c.snapshot}`}>
+                      <td>
+                        <Link href={`/repairs/${c.source}/${c.snapshot}`}>{snapshotDate(c.snapshot)}</Link>
+                      </td>
+                      <td>{c.ratesDate === "null" ? <span className="muted">unknown</span> : c.ratesDate}</td>
+                      <td>
+                        <span
+                          className={`chip ${c.outcome === "HUMAN_NEEDED" ? "ERROR" : c.outcome === "HEALED" ? "ok" : "INFO"}`}
+                        >
+                          {OUTCOME_TEXT[c.outcome]}
+                        </span>
+                      </td>
+                      <td className="mono">
+                        v{c.fromVersion}
+                        {c.toVersion !== null ? ` → v${c.toVersion}` : ""}
+                      </td>
+                      <td className="n">{c.proposals}</td>
+                      <td>
+                        {c.decision ? (
+                          <span className="chip ok">{ACTION_TEXT[c.decision.action]}</span>
+                        ) : c.outcome === "HUMAN_NEEDED" ? (
+                          <span className="chip WARN">needs a decision</span>
+                        ) : (
+                          <span className="muted small">not reviewed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
 
       <p className="small muted">
         From a replay of the page&apos;s archived history ({Object.values(listing.models).join(", ")}, run{" "}

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ACTION_TEXT,
+  archivePageId,
   collector,
   collectorPost,
   OUTCOME_TEXT,
+  PUBLISHER,
   snapshotDate,
   type Attempt,
   type CaseDetail,
@@ -39,7 +41,8 @@ export default async function CasePage({ params }: { params: Params }) {
   c.proposals.forEach((p, i) => columns.push({ label: label(p, i + 1), a: p }));
   if (c.after && c.after.by === "library") columns.push({ label: label(c.after, 0), a: c.after });
   const outlines = columns.map(({ label: l, a }) => ({ label: l, recipe: a.recipe }));
-  const pageId = `archive:${c.snapshot}`;
+  const pageId = archivePageId(source, c.snapshot);
+  const publisher = PUBLISHER[source]?.short ?? source;
   const shownFirst = outlines.length - 1;
   const initial = detail.pageAvailable
     ? await collectorPost<PageView>("/api/v1/lab/view", { pageId, recipe: outlines[shownFirst].recipe })
@@ -112,8 +115,8 @@ export default async function CasePage({ params }: { params: Params }) {
 
       <h2>What each recipe read</h2>
       <p className="muted small">
-        Every rate a recipe read, next to what the ECB&apos;s data feed says for the same day. Green is an exact match,
-        red a wrong number: one red cell and the recipe is rejected. Wrong numbers here never left this page.
+        Every rate a recipe read, next to what {publisher}&apos;s data feed says for the same day. Green is an exact
+        match, red a wrong number: one red cell and the recipe is rejected. Wrong numbers here never left this page.
       </p>
       <ul className="small">
         {columns.map(({ label: l, a }) => (

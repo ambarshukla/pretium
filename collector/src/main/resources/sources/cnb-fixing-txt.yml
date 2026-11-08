@@ -1,0 +1,19 @@
+# The Czech National Bank's daily exchange rate fixing, plain-text channel.
+# The second publisher: the same idea as the ECB (a scraped page checked
+# against a structured channel with the same numbers), with a different page,
+# a different home currency and rates quoted per 1, 100 or 1000 units.
+id: cnb-fixing-txt
+name: CNB exchange rate fixing (daily text file)
+publisher: Czech National Bank
+licence: >-
+  The CNB's website information may be stored, distributed and reproduced,
+  provided the CNB is stated as the source ("Source: the CNB") and the content
+  is not altered. robots.txt allows this file.
+homepage: https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/
+url: https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/daily.txt
+# The first run loads this year so far from the yearly file (one line per day).
+backfillUrl: https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/year.txt?year=2026
+format: CNB_FIXING_TXT
+# The CNB fixes at 14:30 Prague time on working days.
+cron: "0 45 14 * * MON-FRI"
+zone: Europe/Prague

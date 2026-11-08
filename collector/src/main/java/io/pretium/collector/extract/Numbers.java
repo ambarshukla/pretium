@@ -36,4 +36,19 @@ final class Numbers {
       throw new ExtractionException("not a number: '" + raw + "'", e);
     }
   }
+
+  /**
+   * A rate quoted for {@code amount} units (100 HUF, 1000 IDR), as the rate for one unit. Sources
+   * use a power of ten, so this moves the decimal point and nothing else: exact, no rounding.
+   */
+  static BigDecimal perUnit(BigDecimal rate, BigDecimal amount) throws ExtractionException {
+    if (amount.signum() <= 0) {
+      throw new ExtractionException("amount must be positive, found " + amount);
+    }
+    BigDecimal stripped = amount.stripTrailingZeros();
+    if (stripped.unscaledValue().intValue() != 1 || stripped.scale() > 0) {
+      throw new ExtractionException("amount " + amount + " is not a power of ten");
+    }
+    return rate.movePointLeft(-stripped.scale());
+  }
 }

@@ -130,14 +130,15 @@ public final class ModelBench {
 
   public static void main(String[] args) throws Exception {
     Path pagesDir = Path.of(args[0]);
-    ReferenceTruth truth = ReferenceTruth.fromSdmxCsv(Path.of(args[1]));
+    String source = args.length > 8 && !args[8].isBlank() ? args[8] : "ecb-reference-html";
+    ReferenceTruth truth = ReferenceTruth.forPage(source, args[1]);
     String ollama = args[2];
     List<String> models = List.of(args[3].split(","));
     int every = Integer.parseInt(args[4]);
     Path out = Path.of(args[5]);
 
     JsonMapper json = JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build();
-    SourceSpec spec = new SourceCatalog().find("ecb-reference-html").orElseThrow();
+    SourceSpec spec = new SourceCatalog().find(source).orElseThrow();
     List<SourceSpec.Recipe> known = knownRecipes(spec, json);
     // "table": only the direct reading, shown the whole table instead of the digest.
     boolean wholeTable = args.length > 6 && args[6].equals("table");

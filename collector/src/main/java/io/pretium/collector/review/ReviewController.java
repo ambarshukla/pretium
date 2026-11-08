@@ -174,7 +174,7 @@ public class ReviewController {
             .filter(d -> d.source().equals(source) && d.snapshot().equals(snapshot))
             .toList();
     return new Detail(
-        source, book.pageUrl(), book.model(), c, lab.archived(snapshot).isPresent(), mine);
+        source, book.pageUrl(), book.model(), c, lab.archived(source, snapshot).isPresent(), mine);
   }
 
   @PostMapping("/api/v1/repairs/{source}/{snapshot}/decisions")
@@ -218,7 +218,7 @@ public class ReviewController {
       }
       case NEW_RECIPE -> {
         Path page =
-            lab.archived(snapshot)
+            lab.archived(source, snapshot)
                 .orElseThrow(
                     () ->
                         new ResponseStatusException(
@@ -226,7 +226,8 @@ public class ReviewController {
                             "this server does not have the archived page, so a new recipe cannot"
                                 + " be checked here"));
         recipe = clean(req.recipe());
-        RecipeVerifier.Verdict v = lab.verifier().verify(page, new SourceSpec.Recipe(0, recipe));
+        RecipeVerifier.Verdict v =
+            lab.verifier(source).verify(page, new SourceSpec.Recipe(0, recipe));
         if (!v.accepted()) {
           // The same rule as for the model: a recipe that does not read the page exactly is not
           // recorded, whoever wrote it.
@@ -397,6 +398,8 @@ public class ReviewController {
     for (String k :
         List.of(
             "base",
+            "quote",
+            "amountSelector",
             "dateSelector",
             "dateFormat",
             "dateRegex",
@@ -408,7 +411,9 @@ public class ReviewController {
         out.put(k, v.strip());
       }
     }
-    out.putIfAbsent("base", "EUR");
+    if (!out.containsKey("quote")) {
+      out.putIfAbsent("base", "EUR");
+    }
     return out;
   }
 

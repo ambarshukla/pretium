@@ -1,0 +1,26 @@
+# The same fixing again, scraped from the CNB's public web page. A second page
+# design for the scraper, the repair loop and the model comparison: the rows
+# are priced in korunas ("quote: CZK"), and some are per 100 or 1000 units.
+id: cnb-fixing-html
+name: CNB exchange rate fixing (public web page)
+publisher: Czech National Bank
+licence: >-
+  The CNB's website information may be stored, distributed and reproduced,
+  provided the CNB is stated as the source ("Source: the CNB") and the content
+  is not altered. robots.txt allows this page.
+homepage: https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/
+url: https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/
+format: HTML_RATE_TABLE
+cron: "0 50 14 * * MON-FRI"
+zone: Europe/Prague
+recipe:
+  version: 1
+  settings:
+    quote: CZK
+    dateSelector: "p:containsOwn(Validity for)"
+    dateRegex: 'Validity for (\d{1,2} \w{3} \d{4})'
+    dateFormat: d MMM yyyy
+    rowSelector: table.currency-table tbody tr
+    currencySelector: td:nth-of-type(4)
+    amountSelector: td:nth-of-type(3)
+    rateSelector: td:nth-of-type(5)

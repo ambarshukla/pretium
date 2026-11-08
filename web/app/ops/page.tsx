@@ -63,6 +63,17 @@ type Break = {
   resolvedAt: string | null;
 };
 
+type ChannelGroup = {
+  reference: string;
+  channels: string[];
+  date: string | null;
+  agreeing: number;
+  rows: { base: string; quote: string; rates: Record<string, number>; agree: boolean }[];
+};
+const CHANNEL_LABEL: Record<string, string> = {
+  "cnb-fixing-txt": "Text file",
+  "cnb-fixing-html": "Web page (scraped)",
+};
 type LatestRate = { currency: string; date: string; sdmx: number | null; xml: number | null; html: number | null };
 
 type Payout = "LOCAL" | "SEND_CURRENCY" | "USD" | "EUR" | "INVERTED" | "UNEXPLAINED" | "NO_REFERENCE";
@@ -92,7 +103,7 @@ type Benchmark = {
 const when = (s: string | null) => (s ? new Date(s).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "never");
 
 export default async function OpsPage() {
-  const [sources, runs, quality, quarantine, breaks, latest, benchmark] = await Promise.all([
+  const [sources, runs, quality, quarantine, breaks, latest, benchmark, groups] = await Promise.all([
     apiOrNull<SourceHealth[]>("/api/v1/ops/sources"),
     apiOrNull<Run[]>("/api/v1/ops/runs?limit=20"),
     apiOrNull<Quality>("/api/v1/ops/quality"),
@@ -100,7 +111,10 @@ export default async function OpsPage() {
     apiOrNull<Break[]>("/api/v1/ops/breaks?limit=50"),
     apiOrNull<LatestRate[]>("/api/v1/rates/latest"),
     apiOrNull<Benchmark>("/api/v1/ops/benchmark"),
+    apiOrNull<ChannelGroup[]>("/api/v1/rates/channels"),
   ]);
+  const others = (groups ?? []).filter((g) => g.reference !== "ecb-sdmx-exr");
+  const ecbCzk = (latest ?? []).find((r) => r.currency === "CZK");
   const b = benchmark?.byPayout;
   const checked = b ? benchmark!.quotes - b.NO_REFERENCE : 0;
   const otherCurrency = b ? b.SEND_CURRENCY + b.USD + b.EUR : 0;
@@ -222,6 +236,61 @@ export default async function OpsPage() {
           </tbody>
         </table>
       </div>
+
+      {others.map((g) => {
+        const all = [g.reference, ...g.channels];
+        const eurCzk = g.rows.find((r) => r.base === "EUR" && r.quote === "CZK");
+        return (
+          <section key={g.reference}>
+            <h2>A second publisher: the Czech National Bank</h2>
+            <p className="muted small" style={{ marginTop: 0 }}>
+              The same check for a different page: the CNB publishes its daily fixing as a text file and as a web
+              page, priced in korunas, some per 100 or 1,000 units (the recipe divides by the amount column). On{" "}
+              {g.date ?? "–"}, {g.agreeing} of {g.rows.length} currencies agree in both.
+              {eurCzk && ecbCzk && ecbCzk.date === g.date && (
+                <>
+                  {" "}
+                  Across publishers the same pair differs, and should: EUR/CZK was {eurCzk.rates[g.reference]} at
+                  the CNB&apos;s 14:30 fixing and {ecbCzk.sdmx} in the ECB&apos;s, set at about 14:10 CET. That is
+                  why channels are only reconciled with their own publisher.
+                </>
+              )}
+            </p>
+            <div className="panel table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pair</th>
+                    {all.map((c) => (
+                      <th key={c} className="n">
+                        {CHANNEL_LABEL[c] ?? c}
+                      </th>
+                    ))}
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.rows.map((r) => (
+                    <tr key={r.base + r.quote}>
+                      <td className="mono">
+                        {r.base}/{r.quote}
+                      </td>
+                      {all.map((c) => (
+                        <td key={c} className="n">
+                          {r.rates[c] ?? "–"}
+                        </td>
+                      ))}
+                      <td>
+                        <span className={`chip ${r.agree ? "ok" : "WARN"}`}>{r.agree ? "agree" : "check"}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })}
 
       {benchmark && b && (
         <>

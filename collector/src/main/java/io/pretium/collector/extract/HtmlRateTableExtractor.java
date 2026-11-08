@@ -29,6 +29,12 @@ import org.springframework.stereotype.Component;
  * and {@code dateFormat} (where the as-of date is and how it is written), {@code rowSelector} (one
  * match per currency), and {@code currencySelector} and {@code rateSelector} (inside each row).
  *
+ * <p>Tables come in two directions. The ECB's says "1 EUR = 1.08 USD": set {@code base: EUR} and
+ * each row's currency is the quote. A home-currency table says "1 USD = 21.804 CZK": set {@code
+ * quote: CZK} instead, and each row's currency is the base. Set exactly one of the two. Optional
+ * {@code amountSelector} reads a per-row amount for tables that quote "100 HUF = 6.693 CZK"; the
+ * rate is then divided by it (a power of ten, so the decimal point moves and nothing is rounded).
+ *
  * <p>Every failure names the selector that stopped matching, because that is the first thing anyone
  * repairing the recipe needs to know. {@link #trace} runs the same steps and records each one, for
  * the parser lab: what every selector matched, row by row, and where it stopped.
@@ -101,15 +107,16 @@ public class HtmlRateTableExtractor implements Extractor {
     }
     Steps steps = new Steps();
     read(doc, recipe, steps);
-    String base = recipe.require("base");
+    String base = recipe.get("base", null);
+    String quote = recipe.get("quote", null);
     for (Row row : steps.rows) {
       if (row.skipped() == null) {
         sink.rate(
             new ReferenceRateObserved(
                 context.runId(),
                 spec.id(),
-                base,
-                row.currencyText(),
+                base != null ? base : row.currencyText(),
+                base != null ? row.currencyText() : quote,
                 steps.date,
                 row.rate(),
                 context.evidenceSha256()));
@@ -201,7 +208,12 @@ public class HtmlRateTableExtractor implements Extractor {
 
     String currencySelector = recipe.require("currencySelector");
     String rateSelector = recipe.require("rateSelector");
-    recipe.require("base");
+    String amountSelector = recipe.get("amountSelector", null);
+    if ((recipe.get("base", null) == null) == (recipe.get("quote", null) == null)) {
+      throw new IllegalStateException(
+          "recipe needs exactly one of 'base' (rows are quoted against it) or 'quote' (rows are"
+              + " priced in it)");
+    }
     int count = 0;
     int index = 0;
     for (Element row : rows) {
@@ -235,6 +247,19 @@ public class HtmlRateTableExtractor implements Extractor {
       } catch (ExtractionException e) {
         steps.rows.add(new Row(index++, code, rateText, null, "not a number"));
         throw e;
+      }
+      if (amountSelector != null) {
+        Element amount = row.selectFirst(amountSelector);
+        try {
+          if (amount == null) {
+            throw new ExtractionException(
+                "amountSelector '" + amountSelector + "' matched nothing in the " + code + " row");
+          }
+          value = Numbers.perUnit(value, Numbers.decimal(amount.text()));
+        } catch (ExtractionException e) {
+          steps.rows.add(new Row(index++, code, rateText, null, "no usable amount"));
+          throw e;
+        }
       }
       steps.rows.add(new Row(index++, code, rateText, value, null));
       count++;

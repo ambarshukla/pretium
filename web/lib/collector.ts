@@ -247,3 +247,14 @@ export const ACTION_TEXT: Record<Action, string> = {
   NEW_RECIPE: "recipe written by a person",
   DISMISS_PAGE: "page dismissed",
 };
+
+/** Who publishes each scraped page, for text such as "the ECB's data feed". */
+export const PUBLISHER: Record<string, { short: string; page: string }> = {
+  "ecb-reference-html": { short: "the ECB", page: "The ECB's reference rates page" },
+  "cnb-fixing-html": { short: "the CNB", page: "The Czech National Bank's fixing page" },
+};
+
+/** The lab's id for an archived copy of a source's page. */
+export function archivePageId(source: string, snapshot: string): string {
+  return source === "ecb-reference-html" ? `archive:${snapshot}` : `archive:${snapshot}@${source}`;
+}

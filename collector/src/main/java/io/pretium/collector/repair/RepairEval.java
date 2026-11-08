@@ -11,14 +11,16 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Stream;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Measures selector repair against the real history of the ECB's rates page.
+ * Measures selector repair against the real history of a rates page (the ECB's, or the CNB's).
  *
  * <p>Input: archived copies of the page (one per month, 2017 to today, from the Internet Archive),
  * and the SDMX history, which says what every rate really was on every day. The page is replayed
@@ -30,7 +32,10 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>Output: one row per page and a summary, including the count that matters most: proposals that
  * read <em>wrong numbers</em>, which an unverified repair would have published.
  *
- * <p>Usage: {@code RepairEval <pages-dir> <sdmx-csv> <ollama-url> <model> <report.md>}
+ * <p>Usage: {@code RepairEval <pages-dir> <truth files> <ollama-url> <model> <report.md> [source]}.
+ * The truth files are the publisher's structured channel (the ECB's SDMX CSV, the CNB's yearly text
+ * files), comma separated, or a directory of them; {@code source} is the page's source id, {@code
+ * ecb-reference-html} by default.
  */
 public final class RepairEval {
 
@@ -57,14 +62,27 @@ public final class RepairEval {
 
   public static void main(String[] args) throws Exception {
     Path pages = Path.of(args[0]);
-    ReferenceTruth truth = ReferenceTruth.fromSdmxCsv(Path.of(args[1]));
+    String source = args.length > 5 && !args[5].isBlank() ? args[5] : "ecb-reference-html";
+    ReferenceTruth truth = ReferenceTruth.forPage(source, args[1]);
     OllamaRepairer repairer = new OllamaRepairer(args[2], args[3]);
     Path report = Path.of(args[4]);
 
     SourceSpec spec =
         new SourceCatalog()
-            .find("ecb-reference-html")
-            .orElseThrow(() -> new IllegalStateException("no spec"));
+            .find(source)
+            .orElseThrow(() -> new IllegalStateException("no spec for " + source));
+    // The page may have moved over the years: "urls.txt" (snapshot, then the address it was
+    // archived from) says where each copy came from. Without it, every copy is of spec.url().
+    Map<String, String> archivedFrom = new HashMap<>();
+    Path urls = pages.resolve("urls.txt");
+    if (Files.exists(urls)) {
+      for (String line : Files.readAllLines(urls)) {
+        String[] parts = line.strip().split("\\s+");
+        if (parts.length == 2) {
+          archivedFrom.put(parts[0], parts[1]);
+        }
+      }
+    }
     RecipeVerifier verifier = new RecipeVerifier(truth);
 
     List<Path> files;
@@ -89,7 +107,11 @@ public final class RepairEval {
     for (Path page : files) {
       String name = page.getFileName().toString();
       String snapshot = name.replace(".html", "");
-      String archiveUrl = "https://web.archive.org/web/" + snapshot + "/" + spec.url();
+      String archiveUrl =
+          "https://web.archive.org/web/"
+              + snapshot
+              + "/"
+              + archivedFrom.getOrDefault(snapshot, spec.url());
       SourceSpec.Recipe failing = current;
       RecipeVerifier.Verdict verdict = verifier.verify(page, current);
       if (verdict.accepted()) {
@@ -230,6 +252,7 @@ public final class RepairEval {
 
     write(
         report,
+        spec.name(),
         rows,
         repairer.model(),
         library,
@@ -264,6 +287,7 @@ public final class RepairEval {
 
   private static void write(
       Path report,
+      String pageName,
       List<Row> rows,
       String model,
       List<SourceSpec.Recipe> library,
@@ -276,7 +300,7 @@ public final class RepairEval {
       int outputTokens)
       throws IOException {
     StringBuilder md = new StringBuilder();
-    md.append("# Selector repair against the real history of the ECB rates page\n\n");
+    md.append("# Selector repair against the real history of: ").append(pageName).append("\n\n");
     md.append("Model: `")
         .append(model)
         .append("` (local, Ollama). Pages: ")

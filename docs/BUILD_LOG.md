@@ -294,3 +294,32 @@ verifier rejected them as wrong numbers. Fixed (the last date before the table: 
 
 Not done: the 14B model and a run that shows the direct reading the whole table instead of the
 digest. Started, but a 9 GB model next to the rest of the stack ran the laptop out of memory.
+
+## 2026-11-07 · A second publisher, and its page's twenty years replayed
+
+The Czech National Bank's daily fixing is collected twice: the text file it publishes, and
+its public web page read by the same HTML extractor as the ECB's page with a different recipe
+(`quote: CZK`, and an amount column: some rates are per 100 or 1,000 units). Reconciliation is
+now per publisher: the CNB's page is checked against the CNB's file, never against the ECB
+(EUR/CZK on 3 November 2026: 24.340 at the CNB, 24.343 at the ECB, both right).
+
+`RepairEval` then replayed 29 archived copies of the CNB page (2006 to 2025) with
+`qwen2.5-coder:7b`, each checked against the CNB's yearly files for its day.
+
+| Run | Read correctly | Model proposals | Accepted | Wrong numbers accepted |
+|---|---|---|---|---|
+| First | 0 of 29 | 58 | 0 | 0 |
+| After the date fix | 5 of 29 (1 worked, 2 healed, 2 reused) | 44 | 2 | 0 |
+
+The first run found a gap in the program that finds a page's date before the model is asked:
+it knew only the ECB's "6 November 2026". The CNB writes "04 Jan 2019", and "24.Jul 2009" before
+2010, so the model was left to guess the format and got it wrong every time. The date finder
+now knows both shapes; it tries the ECB's first, so ECB pages get the same hints as before.
+
+With the date found, the 2021 to 2024 pages are read. The other 24 fail on the table: the 7B
+model counts the columns wrongly (the currency code is the fourth cell; it chose the first or
+second 25 times, reading country names, currency names or empty cells). The verifier rejected
+every one, and those pages wait for a person. Three proposals timed out.
+
+Not done: a date-only repair (keep the table selectors, replace only the date settings, verify)
+before the model is asked. It would read the July 2025 page, whose table is unchanged.

@@ -228,11 +228,39 @@ public class Lab {
     this.ollamaUrl = ollamaUrl.isBlank() ? null : ollamaUrl.replaceAll("/+$", "");
   }
 
-  /** Pages to choose from, newest first: collected ones, then archived ones. */
+  /** The scraped sources the lab can work on, the ECB's first. */
+  public List<String> sources() {
+    List<String> out = new ArrayList<>(List.of(SOURCE));
+    CHANNELS.keySet().stream().filter(k -> !k.equals(SOURCE)).sorted().forEach(out::add);
+    return out;
+  }
+
+  /** The source a page id belongs to: the ECB's unless the id ends "@<source>". */
+  public static String sourceOf(String pageId) {
+    int at = pageId == null ? -1 : pageId.indexOf('@');
+    return at < 0 ? SOURCE : pageId.substring(at + 1);
+  }
+
+  /** Ids for another source's pages end "@<source>"; the ECB's stay as they were. */
+  private static String suffix(String source) {
+    return source.equals(SOURCE) ? "" : "@" + source;
+  }
+
   public List<Page> pages() throws IOException {
+    return pages(SOURCE);
+  }
+
+  /** Pages to choose from, newest first: collected ones, then archived ones. */
+  public List<Page> pages(String source) throws IOException {
+    if (!CHANNELS.containsKey(source)) {
+      throw new IllegalArgumentException("unknown source: " + source);
+    }
+    String tag = suffix(source);
+    Path archive =
+        archiveDir == null ? null : source.equals(SOURCE) ? archiveDir : archiveDir.resolve(source);
     List<Page> out = new ArrayList<>();
     Map<String, RawStore.Entry> latestBySha = new LinkedHashMap<>();
-    for (RawStore.Entry e : raw.entries(SOURCE)) {
+    for (RawStore.Entry e : raw.entries(source)) {
       latestBySha.put(e.sha256(), e);
     }
     latestBySha.values().stream()
@@ -240,9 +268,10 @@ public class Lab {
         .forEach(
             e ->
                 out.add(
-                    new Page("collected:" + e.sha256(), "collected", e.fetchedAt().toString())));
-    if (archiveDir != null && Files.isDirectory(archiveDir)) {
-      try (Stream<Path> files = Files.list(archiveDir)) {
+                    new Page(
+                        "collected:" + e.sha256() + tag, "collected", e.fetchedAt().toString())));
+    if (archive != null && Files.isDirectory(archive)) {
+      try (Stream<Path> files = Files.list(archive)) {
         files
             .map(p -> p.getFileName().toString())
             .filter(n -> n.endsWith(".html"))
@@ -253,7 +282,7 @@ public class Lab {
                 ts ->
                     out.add(
                         new Page(
-                            "archive:" + ts,
+                            "archive:" + ts + tag,
                             "archive",
                             LocalDateTime.parse(ts, SNAPSHOT_TIME)
                                 .toInstant(ZoneOffset.UTC)
@@ -275,6 +304,19 @@ public class Lab {
     if (other.matches() && archiveDir != null && CHANNELS.containsKey(other.group(2))) {
       Path p = archiveDir.resolve(other.group(2)).resolve(other.group(1) + ".html");
       return Files.isRegularFile(p) ? Optional.of(p) : Optional.empty();
+    }
+    if (pageId.startsWith("collected:") && pageId.contains("@")) {
+      String source = sourceOf(pageId);
+      String sha = pageId.substring("collected:".length(), pageId.indexOf('@'));
+      if (CHANNELS.containsKey(source) && SHA.matcher(sha).matches()) {
+        for (RawStore.Entry e : raw.entries(source)) {
+          if (e.sha256().equals(sha)) {
+            Path p = raw.pathOf(source, e);
+            return Files.isRegularFile(p) ? Optional.of(p) : Optional.empty();
+          }
+        }
+      }
+      return Optional.empty();
     }
     if (pageId.startsWith("archive:") && archiveDir != null) {
       String ts = pageId.substring("archive:".length());
@@ -369,7 +411,12 @@ public class Lab {
   public Result runRecipe(String pageId, Path page, String by, SourceSpec.Recipe recipe)
       throws IOException {
     return Result.of(
-        pageId, by, null, recipe, verifier().verify(page, recipe), trace(page, recipe));
+        pageId,
+        by,
+        null,
+        recipe,
+        verifier(sourceOf(pageId)).verify(page, recipe),
+        trace(page, recipe));
   }
 
   static HtmlRateTableExtractor.Trace trace(Path page, SourceSpec.Recipe recipe)
@@ -380,8 +427,12 @@ public class Lab {
 
   /** The archived copy's address at the Internet Archive, for archive pages. */
   static String archiveUrl(String pageId, String pageUrl) {
+    int at = pageId.indexOf('@');
     return pageId.startsWith("archive:")
-        ? "https://web.archive.org/web/" + pageId.substring("archive:".length()) + "/" + pageUrl
+        ? "https://web.archive.org/web/"
+            + pageId.substring("archive:".length(), at < 0 ? pageId.length() : at)
+            + "/"
+            + pageUrl
         : null;
   }
 
@@ -405,7 +456,7 @@ public class Lab {
       }
     }
     String digest = PageDigest.of(page);
-    RecipeVerifier.Verdict current = verifier().verify(page, inUse);
+    RecipeVerifier.Verdict current = verifier(sourceOf(pageId)).verify(page, inUse);
     String error =
         current.accepted()
             ? "none: the recipe in use reads this page; propose a recipe for it anyway"
@@ -535,7 +586,7 @@ public class Lab {
       throw new Busy();
     }
     try {
-      RecipeVerifier verifier = verifier();
+      RecipeVerifier verifier = verifier(sourceOf(pageId));
       RecipeVerifier.Verdict current = verifier.verify(page, inUse);
       String error =
           current.accepted()
@@ -578,8 +629,19 @@ public class Lab {
    * until the reference data changes.
    */
   public Batch batch(SourceSpec.Recipe recipe) throws IOException {
-    RecipeVerifier verifier = verifier();
-    String key = truthFiles + "|" + new java.util.TreeMap<>(recipe.settings());
+    return batch(SOURCE, recipe);
+  }
+
+  public Batch batch(String source, SourceSpec.Recipe recipe) throws IOException {
+    RecipeVerifier verifier = verifier(source);
+    String key =
+        source
+            + "|"
+            + truthFiles
+            + "|"
+            + otherTruthFiles
+            + "|"
+            + new java.util.TreeMap<>(recipe.settings());
     Batch cached = batches.get(key);
     if (cached != null) {
       return cached;
@@ -590,7 +652,7 @@ public class Lab {
     try {
       long start = System.nanoTime();
       List<BatchRow> rows = new ArrayList<>();
-      for (Page page : pages()) {
+      for (Page page : pages(source)) {
         Optional<Path> file = file(page.id());
         if (file.isEmpty()) {
           continue;

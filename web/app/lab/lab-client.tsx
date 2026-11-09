@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { LabInfo, LabPage, LabResult, Recipe } from "@/lib/collector";
-import { OUTCOME_TEXT, snapshotDate } from "@/lib/collector";
+import { OUTCOME_TEXT, PUBLISHER, snapshotDate } from "@/lib/collector";
 import { RECIPE_KEYS } from "@/lib/recipe-code";
 import { batchLab, runLab, type RunChoice } from "../repairs/actions";
 import { BatchStrips, type NamedBatch } from "./batch-view";
@@ -16,7 +16,7 @@ type Named = { label: string; recipe: Recipe };
 
 function pageLabel(p: LabPage, info: LabInfo): string {
   if (p.origin === "collected") return `${p.when.slice(0, 16).replace("T", " ")} UTC · fetched by the collector`;
-  const ts = p.id.slice("archive:".length);
+  const ts = p.id.slice("archive:".length).split("@")[0];
   const outcome = info.cases[ts];
   return `${snapshotDate(ts)} · archived${outcome ? ` · repair case: ${OUTCOME_TEXT[outcome]}` : ""}`;
 }
@@ -24,7 +24,7 @@ function pageLabel(p: LabPage, info: LabInfo): string {
 function groups(info: LabInfo): { label: string; pages: LabPage[] }[] {
   const collected = info.pages.filter((p) => p.origin === "collected");
   const archived = info.pages.filter((p) => p.origin === "archive");
-  const cases = archived.filter((p) => info.cases[p.id.slice(8)]);
+  const cases = archived.filter((p) => info.cases[p.id.slice(8, 22)]);
   const byYear = new Map<string, LabPage[]>();
   for (const p of archived) {
     const y = p.id.slice(8, 12);
@@ -129,7 +129,7 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
     const choice = parser === "custom" ? { recipe: custom } : { recipeVersion: Number(parser.slice(7)) };
     setError(null);
     startBatch(async () => {
-      const res = await batchLab(choice, key);
+      const res = await batchLab(choice, key, info.source);
       if (res.ok) keepBatch(label, res.data);
       else setError(res.error);
     });
@@ -139,7 +139,7 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
     setError(null);
     startBatch(async () => {
       for (const r of info.recipes) {
-        const res = await batchLab({ recipeVersion: r.version }, key);
+        const res = await batchLab({ recipeVersion: r.version }, key, info.source);
         if (!res.ok) {
           setError(res.error);
           return;
@@ -315,7 +315,7 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
       {batches.length === 0 ? (
         <p className="muted">
           &ldquo;Run on every page&rdquo; reads all {info.pages.length} pages with the chosen recipe and checks each
-          against the ECB&apos;s data feed, in a few seconds.{" "}
+          against {PUBLISHER[info.source]?.short ?? "the publisher"}&apos;s data feed, in a few seconds.{" "}
           <button type="button" className="link" disabled={batchPending} onClick={runAllKnown}>
             {batchPending ? "Reading…" : "Run every known recipe"}
           </button>{" "}
@@ -340,7 +340,7 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
               </li>
             ))}
           </ul>
-          <h3>Every rate, every run, against the ECB&apos;s data feed</h3>
+          <h3>Every rate, every run, against {PUBLISHER[info.source]?.short ?? "the publisher"}&apos;s data feed</h3>
           <div className="panel">
             <ReadingsCompare columns={shown.map((r) => ({ label: r.label, readings: r.result.readings }))} />
           </div>

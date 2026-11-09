@@ -166,8 +166,38 @@ public final class RepairEval {
         continue;
       }
 
-      String digest = PageDigest.of(page);
       PageDigest.DateHint dateHint = PageDigest.dateHint(page);
+      // Cheapest repair first: only the date line changed, so keep the table selectors.
+      SourceSpec.Recipe dateFix = DateOnlyRepair.apply(current, dateHint, nextVersion);
+      if (dateFix != null) {
+        RecipeVerifier.Verdict dv = verifier.verify(page, dateFix);
+        if (dv.accepted()) {
+          current = dateFix;
+          library.add(dateFix);
+          nextVersion++;
+          rows.add(
+              new Row(
+                  name,
+                  String.valueOf(dv.date()),
+                  Outcome.HEALED,
+                  dateFix.version(),
+                  0,
+                  0,
+                  "date settings only, no model"));
+          cases.add(
+              new Casebook.Case(
+                  snapshot,
+                  archiveUrl,
+                  String.valueOf(dv.date()),
+                  Outcome.HEALED.name(),
+                  Casebook.Attempt.of("recipe", failing, verdict),
+                  List.of(Casebook.Attempt.of("date-fix", dateFix, dv)),
+                  Casebook.Attempt.of("date-fix", dateFix, dv)));
+          System.out.printf("%s HEALED (date only)%n", name);
+          continue;
+        }
+      }
+      String digest = PageDigest.of(page);
       String error = verdict.error();
       SourceSpec.Recipe base = current;
       boolean healed = false;

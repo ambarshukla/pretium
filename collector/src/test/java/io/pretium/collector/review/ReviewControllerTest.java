@@ -305,4 +305,41 @@ class ReviewControllerTest {
     assertThat(lab.file("archive:20190415031709")).isEmpty();
     assertThat(lab.file(null)).isEmpty();
   }
+
+  @Test
+  void theLabWorksOnTheCzechPageToo() throws Exception {
+    String cnb = "cnb-fixing-html";
+    Path raw = tmp.resolve("raw");
+    Files.createDirectories(raw.resolve("cnb-fixing-txt"));
+    Files.copy(
+        fixture("cnb-fixing-year-2025-07-01-excerpt.txt"),
+        raw.resolve("cnb-fixing-txt").resolve("2025.txt"));
+    Path archive = Files.createDirectories(tmp.resolve("archive").resolve(cnb));
+    Files.copy(
+        fixture("cnb-fixing-2025-07-01-archived.html"), archive.resolve("20250701172207.html"));
+
+    assertThat(lab.sources()).containsExactly(SOURCE, cnb);
+    assertThat(lab.pages(cnb))
+        .extracting(Lab.Page::id)
+        .containsExactly("archive:20250701172207@" + cnb);
+    assertThat(lab.pages(SOURCE)).extracting(Lab.Page::id).containsExactly("archive:" + TRUNCATED);
+    assertThat(controller(KEY).lab(cnb).source()).isEqualTo(cnb);
+    assertThatThrownBy(() -> controller(KEY).lab("nope"))
+        .isInstanceOfSatisfying(
+            ResponseStatusException.class, e -> assertThat(status(e)).isEqualTo(404));
+
+    // A recipe is judged against the page's own publisher, not the ECB.
+    String id = "archive:20250701172207@" + cnb;
+    Path page = lab.file(id).orElseThrow();
+    SourceSpec.Recipe inUse = sources.find(cnb).orElseThrow().recipe();
+    assertThat(lab.runRecipe(id, page, "recipe", inUse).accepted()).isFalse();
+    SourceSpec.Recipe fixed =
+        io.pretium.collector.repair.DateOnlyRepair.apply(
+            inUse, io.pretium.collector.repair.PageDigest.dateHint(page), 2);
+    Lab.Result r = lab.runRecipe(id, page, "human", fixed);
+    assertThat(r.accepted()).isTrue();
+    assertThat(r.ratesDate()).isEqualTo("2025-07-01");
+    assertThat(lab.view(id, page, null, inUse, "https://example.test/").archiveUrl())
+        .isEqualTo("https://web.archive.org/web/20250701172207/https://example.test/");
+  }
 }

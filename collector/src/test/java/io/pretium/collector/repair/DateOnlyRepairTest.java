@@ -48,6 +48,8 @@ class DateOnlyRepairTest {
       assertThat(fixed.get(key, null)).isEqualTo(inUse.get(key, null));
     }
     assertThat(fixed.get("dateSelector", null)).isNotEqualTo(inUse.get("dateSelector", null));
+    // Pointed at by its words, not by its position in the page.
+    assertThat(fixed.get("dateSelector", null)).contains("Valid for").doesNotContain("nth-child");
     RecipeVerifier.Verdict v = verifier().verify(page, fixed);
     assertThat(v.accepted()).isTrue();
     assertThat(v.date()).isEqualTo(LocalDate.of(2025, 7, 1));

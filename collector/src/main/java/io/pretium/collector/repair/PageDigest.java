@@ -97,8 +97,44 @@ public final class PageDigest {
       return null;
     }
     String tag = e.tagName();
-    String selector = doc.selectFirst(tag) == e ? tag : e.cssSelector();
+    String selector = doc.selectFirst(tag) == e ? tag : textSelector(doc, e, date);
     return new DateHint(selector, shape.format(), shape.regex(), e.ownText().strip());
+  }
+
+  private static final Pattern PLAIN_WORDS = Pattern.compile("[A-Za-z][A-Za-z :-]{3,}[A-Za-z]");
+
+  /**
+   * How to point at the date's element when its tag alone does not: by the words around the date
+   * ("p:containsOwn(Validity for)"), which survive blocks being added or moved on the page, and
+   * only if that finds this very element first. Otherwise the element's position in the page (a
+   * path such as "div:nth-child(5) > p"), which is exact but breaks at the next change of layout.
+   */
+  private static String textSelector(Document doc, Element e, Pattern date) {
+    String text = e.ownText().strip();
+    java.util.regex.Matcher m = date.matcher(text);
+    if (m.find()) {
+      for (String words : new String[] {text.substring(0, m.start()), text.substring(m.end())}) {
+        words = words.strip();
+        if (PLAIN_WORDS.matcher(words).matches()) {
+          // Plain words first; then anchored to the date's side, since other elements of the page
+          // may use the same words (containsOwn ignores case and position).
+          boolean before = words.equals(text.substring(0, m.start()).strip());
+          for (String candidate :
+              new String[] {
+                e.tagName() + ":containsOwn(" + words + ")",
+                e.tagName()
+                    + (before
+                        ? ":matchesOwn(^" + words + " \\d)"
+                        : ":matchesOwn(\\d " + words + "$)")
+              }) {
+            if (doc.selectFirst(candidate) == e) {
+              return candidate;
+            }
+          }
+        }
+      }
+    }
+    return e.cssSelector();
   }
 
   public static String of(Path page) throws IOException {

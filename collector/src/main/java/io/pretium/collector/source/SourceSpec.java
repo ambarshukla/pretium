@@ -66,6 +66,7 @@ public record SourceSpec(
     ECB_EUROFXREF_XML,
     ECB_SDMX_CSV,
     CNB_FIXING_TXT,
+    BOC_VALET_CSV,
     HTML_RATE_TABLE,
     RPW_XLSX
   }

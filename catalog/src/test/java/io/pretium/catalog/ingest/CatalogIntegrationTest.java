@@ -148,7 +148,8 @@ class CatalogIntegrationTest {
     // its third channel (the web page) sent nothing here: a missing channel is not agreement.
     assertThat(rates.channels())
         .extracting(RatesController.Group::reference, RatesController.Group::agreeing)
-        .containsExactlyInAnyOrder(tuple("ecb-sdmx-exr", 0), tuple("cnb-fixing-txt", 1));
+        .containsExactlyInAnyOrder(
+            tuple("ecb-sdmx-exr", 0), tuple("cnb-fixing-txt", 1), tuple("boc-valet-fx", 0));
 
     // Delivered twice (Kafka is at-least-once): still one row, no revision.
     send(Topics.REFERENCE_RATES, rate("ecb-eurofxref-daily", "USD", "1.1179"));

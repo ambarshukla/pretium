@@ -34,6 +34,8 @@ import org.springframework.stereotype.Component;
  * quote: CZK} instead, and each row's currency is the base. Set exactly one of the two. Optional
  * {@code amountSelector} reads a per-row amount for tables that quote "100 HUF = 6.693 CZK"; the
  * rate is then divided by it (a power of ten, so the decimal point moves and nothing is rounded).
+ * Optional {@code currencyNames} names a table (see {@link CurrencyNames}) for pages that write
+ * "Australian dollar" where others write "AUD".
  *
  * <p>Every failure names the selector that stopped matching, because that is the first thing anyone
  * repairing the recipe needs to know. {@link #trace} runs the same steps and records each one, for
@@ -180,6 +182,8 @@ public class HtmlRateTableExtractor implements Extractor {
       }
       dateText = m.group(1).strip();
     }
+    // Some pages write dates with a non-breaking hyphen (U+2011) so they never wrap: read as '-'.
+    dateText = dateText.replaceAll("[\\u2010\\u2011\\u2012\\u2013\\u2212]", "-");
     steps.dateStep = new DateStep(dateSelector, elementText, dateRegex, dateText, dateFormat, null);
     LocalDate date;
     try {
@@ -209,6 +213,7 @@ public class HtmlRateTableExtractor implements Extractor {
     String currencySelector = recipe.require("currencySelector");
     String rateSelector = recipe.require("rateSelector");
     String amountSelector = recipe.get("amountSelector", null);
+    String currencyNames = recipe.get("currencyNames", null);
     if ((recipe.get("base", null) == null) == (recipe.get("quote", null) == null)) {
       throw new IllegalStateException(
           "recipe needs exactly one of 'base' (rows are quoted against it) or 'quote' (rows are"
@@ -231,6 +236,15 @@ public class HtmlRateTableExtractor implements Extractor {
                 null,
                 currency == null ? "no currency cell" : "no rate cell"));
         continue;
+      }
+      if (!code.matches("[A-Z]{3}") && currencyNames != null) {
+        // A table that names currencies in words: look the name up, and fail on one not known.
+        try {
+          code = CurrencyNames.code(currencyNames, code);
+        } catch (ExtractionException e) {
+          steps.rows.add(new Row(index++, code, rateText, null, "unknown currency name"));
+          throw e;
+        }
       }
       if (!code.matches("[A-Z]{3}")) {
         steps.rows.add(new Row(index++, code, rateText, null, "not a currency code"));

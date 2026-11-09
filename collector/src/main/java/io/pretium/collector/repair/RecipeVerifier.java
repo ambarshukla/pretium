@@ -114,12 +114,11 @@ public final class RecipeVerifier {
     int matched = 0;
     List<String> wrong = new ArrayList<>();
     for (ReferenceRateObserved r : read) {
-      BigDecimal truthRate = expected.get(ReferenceTruth.rowCurrency(r));
+      BigDecimal truthRate = expected.get(truth.rowCurrency(r));
       if (truthRate != null && truthRate.compareTo(r.rate()) == 0) {
         matched++;
       } else {
-        wrong.add(
-            ReferenceTruth.rowCurrency(r) + "=" + r.rate() + " (reference " + truthRate + ")");
+        wrong.add(truth.rowCurrency(r) + "=" + r.rate() + " (reference " + truthRate + ")");
       }
     }
     // 80%, not 100%: the SDMX API also carries indicative rates (ARS, DZD, MAD, TWD in 2017)
@@ -144,11 +143,11 @@ public final class RecipeVerifier {
   }
 
   /** Every currency either side has, in alphabetical order. */
-  private static List<Reading> readings(
+  private List<Reading> readings(
       List<ReferenceRateObserved> read, Map<String, BigDecimal> expected) {
     Map<String, BigDecimal> byCurrency = new TreeMap<>();
     for (ReferenceRateObserved r : read) {
-      byCurrency.putIfAbsent(ReferenceTruth.rowCurrency(r), r.rate());
+      byCurrency.putIfAbsent(truth.rowCurrency(r), r.rate());
     }
     TreeSet<String> currencies = new TreeSet<>(byCurrency.keySet());
     currencies.addAll(expected.keySet());

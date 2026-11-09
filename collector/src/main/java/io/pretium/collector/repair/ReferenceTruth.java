@@ -1,5 +1,6 @@
 package io.pretium.collector.repair;
 
+import io.pretium.collector.extract.BocValetCsvExtractor;
 import io.pretium.collector.extract.CnbFixingTxtExtractor;
 import io.pretium.collector.extract.EcbSdmxCsvExtractor;
 import io.pretium.collector.extract.ExtractionException;
@@ -27,7 +28,12 @@ public final class ReferenceTruth {
 
   private final Map<LocalDate, Map<String, BigDecimal>> byDate = new HashMap<>();
 
-  private ReferenceTruth() {}
+  /** The currency every row of this publisher's table shares: EUR for the ECB, CZK for the CNB. */
+  private final String home;
+
+  private ReferenceTruth(String home) {
+    this.home = home;
+  }
 
   /**
    * Loads a publisher's structured channel: the ECB's SDMX CSV or the CNB's text files (daily or
@@ -38,9 +44,16 @@ public final class ReferenceTruth {
     return switch (format) {
       case ECB_SDMX_CSV -> fromSdmxCsv(files);
       case CNB_FIXING_TXT -> {
-        ReferenceTruth truth = new ReferenceTruth();
+        ReferenceTruth truth = new ReferenceTruth(CnbFixingTxtExtractor.HOME);
         for (Path file : files) {
           truth.load(file, new CnbFixingTxtExtractor(), format);
+        }
+        yield truth;
+      }
+      case BOC_VALET_CSV -> {
+        ReferenceTruth truth = new ReferenceTruth(BocValetCsvExtractor.HOME);
+        for (Path file : files) {
+          truth.load(file, new BocValetCsvExtractor(), format);
         }
         yield truth;
       }
@@ -52,7 +65,8 @@ public final class ReferenceTruth {
   private static final Map<String, SourceSpec.Format> CHANNEL_OF_PAGE =
       Map.of(
           "ecb-reference-html", SourceSpec.Format.ECB_SDMX_CSV,
-          "cnb-fixing-html", SourceSpec.Format.CNB_FIXING_TXT);
+          "cnb-fixing-html", SourceSpec.Format.CNB_FIXING_TXT,
+          "boc-daily-html", SourceSpec.Format.BOC_VALET_CSV);
 
   /**
    * The answer key for a scraped page, from files of its publisher's structured channel. {@code
@@ -85,7 +99,7 @@ public final class ReferenceTruth {
 
   /** Loads several SDMX CSV evidence files into one: the history backfill plus later runs. */
   public static ReferenceTruth fromSdmxCsv(List<Path> files) throws ExtractionException {
-    ReferenceTruth truth = new ReferenceTruth();
+    ReferenceTruth truth = new ReferenceTruth("EUR");
     for (Path file : files) {
       truth.load(file, new EcbSdmxCsvExtractor(), SourceSpec.Format.ECB_SDMX_CSV);
     }
@@ -127,11 +141,13 @@ public final class ReferenceTruth {
   }
 
   /**
-   * The currency a row of a rates table is about: the side that is not the home currency (EUR for
-   * the ECB, CZK for the CNB).
+   * The currency a row of a rates table is about: the side of the pair that is not the publisher's
+   * home currency. The same pair means different rows at different publishers (EUR/CZK is the CZK
+   * row of the ECB's table and the EUR row of the CNB's), so the home currency is the context, not
+   * the codes themselves.
    */
-  public static String rowCurrency(ReferenceRateObserved r) {
-    return r.quote().equals(CnbFixingTxtExtractor.HOME) ? r.base() : r.quote();
+  public String rowCurrency(ReferenceRateObserved r) {
+    return r.base().equals(home) ? r.quote() : r.base();
   }
 
   /** The rates for one day, by currency; empty if the publisher published none that day. */

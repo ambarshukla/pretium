@@ -1,0 +1,21 @@
+# The Bank of Canada's daily exchange rates through its Valet API (CSV).
+# The third publisher, and a third shape of data: a block-structured CSV with
+# one column per currency, named for the pair it carries (FXAUDCAD).
+id: boc-valet-fx
+name: Bank of Canada daily exchange rates (Valet API, CSV)
+publisher: Bank of Canada
+licence: >-
+  The Bank of Canada permits its website content to be freely used, copied,
+  distributed and transmitted, provided the Bank is attributed as the source
+  ("Source: Bank of Canada"), changes are indicated, and due diligence is
+  exercised on accuracy (Terms of Use, section 1). Its terms exclude bank note
+  images, its logo and third-party content, none of which is used here.
+homepage: https://www.bankofcanada.ca/valet/docs
+# The last five business days on every run, which also picks up a late correction.
+url: https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/csv?recent=5
+# The first run loads the history the repair tools replay against.
+backfillUrl: https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/csv?start_date=2017-01-01
+format: BOC_VALET_CSV
+# The Bank publishes by 16:30 Eastern time on business days.
+cron: "0 45 16 * * MON-FRI"
+zone: America/Toronto

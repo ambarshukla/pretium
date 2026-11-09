@@ -318,7 +318,7 @@ class ReviewControllerTest {
     Files.copy(
         fixture("cnb-fixing-2025-07-01-archived.html"), archive.resolve("20250701172207.html"));
 
-    assertThat(lab.sources()).containsExactly(SOURCE, cnb);
+    assertThat(lab.sources()).containsExactly(SOURCE, "boc-daily-html", cnb);
     assertThat(lab.pages(cnb))
         .extracting(Lab.Page::id)
         .containsExactly("archive:20250701172207@" + cnb);

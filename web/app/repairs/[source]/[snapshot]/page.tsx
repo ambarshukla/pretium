@@ -127,7 +127,10 @@ export default async function CasePage({ params }: { params: Params }) {
         ))}
       </ul>
       <div className="panel">
-        <ReadingsCompare columns={columns.map(({ label: l, a }) => ({ label: l, readings: a.readings }))} />
+        <ReadingsCompare
+          columns={columns.map(({ label: l, a }) => ({ label: l, readings: a.readings }))}
+          referenceLabel={`${PUBLISHER[source]?.short.replace(/^the /, "") ?? "Publisher"} reference`}
+        />
       </div>
 
       {c.proposals.length > 0 && (

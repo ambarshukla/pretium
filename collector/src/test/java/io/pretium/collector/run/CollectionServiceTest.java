@@ -77,15 +77,26 @@ class CollectionServiceTest {
     return Path.of(CollectionServiceTest.class.getResource("/fixtures/" + name).toURI());
   }
 
+  /** Every request the service made: the URL, and the ETag it offered (empty if none). */
+  record Asked(String url, java.util.Optional<String> etag) {}
+
+  final List<Asked> asked = new ArrayList<>();
+
   /** The fetcher hands over a fresh copy each time, as the real one does (the store moves it). */
   void serve(String fixture) throws Exception {
+    serve(fixture, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  void serve(String fixture, String etag) throws Exception {
     Path source = fixture(fixture);
     when(fetcher.fetch(anyString(), any()))
         .thenAnswer(
             call -> {
+              asked.add(new Asked(call.getArgument(0), call.getArgument(1)));
               Path copy = Files.createTempFile(downloads, "body-", ".tmp");
               Files.copy(source, copy, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-              return new FetchResult(FetchResult.Outcome.OK, 200, copy, null, null);
+              return new FetchResult(FetchResult.Outcome.OK, 200, copy, etag, null);
             });
   }
 
@@ -196,6 +207,81 @@ class CollectionServiceTest {
    * A recipe with a selector jsoup cannot parse (a typo, or a bad repair proposal) makes jsoup
    * throw an unchecked exception. It must still end as a reported failed run.
    */
+  /**
+   * An ETag belongs to one URL. The first run of a source with a history endpoint fetches that
+   * endpoint; the ETag it returns must not be offered for the daily URL on the next run, or a
+   * server that happens to match it would answer 304 and the daily file would never be read.
+   */
+  @Test
+  void anEtagIsOnlyOfferedBackForTheUrlThatGaveIt() throws Exception {
+    serve("ecb-eurofxref-2026-11-03.xml", "\"v1\"");
+    SourceSpec spec =
+        new SourceSpec(
+            "ecb-eurofxref-daily",
+            "daily",
+            "ECB",
+            "test",
+            null,
+            "https://www.ecb.europa.eu/daily.xml",
+            "https://www.ecb.europa.eu/history.xml",
+            SourceSpec.Format.ECB_EUROFXREF_XML,
+            "0 0 0 * * *",
+            "UTC",
+            null);
+    CollectionService service = service(new EcbEurofxrefXmlExtractor());
+
+    service.collect(spec, false); // first run: history, no ETag to offer
+    service.collect(spec, false); // second: the daily URL; the history's ETag does not apply
+    service.collect(spec, false); // third: the daily URL again; now its own ETag is offered
+
+    assertThat(asked)
+        .containsExactly(
+            new Asked("https://www.ecb.europa.eu/history.xml", java.util.Optional.empty()),
+            new Asked("https://www.ecb.europa.eu/daily.xml", java.util.Optional.empty()),
+            new Asked("https://www.ecb.europa.eu/daily.xml", java.util.Optional.of("\"v1\"")));
+  }
+
+  /**
+   * A server that answers 304 to a request that offered no ETag is wrong, but still gets a report.
+   */
+  @Test
+  void aNotModifiedWithNothingToReuseIsAFailedRunNotAnException() throws Exception {
+    when(fetcher.fetch(anyString(), any()))
+        .thenReturn(new FetchResult(FetchResult.Outcome.NOT_MODIFIED, 304, null, null, null));
+
+    CollectionRun run =
+        service(new EcbEurofxrefXmlExtractor())
+            .collect(spec("ecb-eurofxref-daily", SourceSpec.Format.ECB_EUROFXREF_XML, null), false);
+
+    assertThat(run.status()).isEqualTo(Status.FETCH_FAILED);
+    assertThat(run.message()).contains("no stored copy");
+    assertThat(sent).containsExactly(new Sent(Topics.COLLECTION_RUNS, "ecb-eurofxref-daily"));
+  }
+
+  /** Kafka refusing the observations is the publisher's failure, not the source's. */
+  @Test
+  void observationsThatDoNotReachKafkaMakeThePublishFail() throws Exception {
+    serve("ecb-eurofxref-2026-11-03.xml");
+    when(kafka.send(anyString(), anyString(), anyString()))
+        .thenAnswer(
+            call -> {
+              sent.add(new Sent(call.getArgument(0), call.getArgument(1)));
+              return Topics.COLLECTION_RUNS.equals(call.getArgument(0))
+                  ? CompletableFuture.completedFuture(null)
+                  : CompletableFuture.failedFuture(new RuntimeException("broker away"));
+            });
+
+    CollectionRun run =
+        service(new EcbEurofxrefXmlExtractor())
+            .collect(spec("ecb-eurofxref-daily", SourceSpec.Format.ECB_EUROFXREF_XML, null), false);
+
+    assertThat(run.status()).isEqualTo(Status.PUBLISH_FAILED);
+    assertThat(run.message()).contains("broker away");
+    // Nothing was marked as extracted, so the next run reads the same evidence again.
+    assertThat(new RawStore(rawDir).alreadyExtracted("ecb-eurofxref-daily", run.sha256(), 0))
+        .isFalse();
+  }
+
   @Test
   void aMalformedSelectorIsAFailedRunNotAMissingOne() throws Exception {
     serve("ecb-reference-2026-11-03.html");

@@ -155,7 +155,12 @@ public class CollectionService {
         previous.isEmpty() && spec.backfillUrl() != null
             ? spec.backfillUrl()
             : discovery.urlFor(spec);
-    Optional<String> etag = force ? Optional.empty() : previous.map(RawStore.Entry::etag);
+    // An ETag names one resource's version, so it is only offered back for the same URL: after the
+    // first run (the history endpoint) or when a catalogue names a new file, it is not sent.
+    Optional<String> etag =
+        force
+            ? Optional.empty()
+            : previous.filter(e -> url.equals(e.url())).map(RawStore.Entry::etag);
     FetchResult fetched = fetcher.fetch(url, etag);
 
     RawStore.Entry evidence;
@@ -186,7 +191,23 @@ public class CollectionService {
             0,
             fetched.message());
       }
-      case NOT_MODIFIED -> evidence = previous.orElseThrow();
+      case NOT_MODIFIED -> {
+        if (previous.isEmpty()) {
+          // A 304 to a request that offered no ETag: the server's fault, but still a reported run.
+          return run(
+              runId,
+              spec,
+              url,
+              started,
+              Status.FETCH_FAILED,
+              fetched.httpStatus(),
+              0,
+              null,
+              0,
+              "304 Not Modified, but there is no stored copy to reuse");
+        }
+        evidence = previous.get();
+      }
       case OK -> {
         try {
           evidence =
@@ -268,7 +289,7 @@ public class CollectionService {
             spec,
             url,
             started,
-            Status.FETCH_FAILED,
+            Status.PUBLISH_FAILED,
             fetched.httpStatus(),
             evidence.bytes(),
             evidence.sha256(),

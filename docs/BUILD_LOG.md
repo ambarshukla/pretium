@@ -338,4 +338,9 @@ evidence) and what each loss costs. Decision D-023.
 so the counts of rates, prices and breaks should be the same before and after, and the only new
 rows should be the run reports.
 
-**Observed.** Not yet run on the host; this entry is completed after the first replay there.
+**Observed** (11 November 2026, on the host, `ecb-eurofxref-daily`: six stored files, 29 rates
+each). Before: 97,892 rates, 407,851 prices, 0 open breaks, 0 revisions, 24 run reports. The
+replay took under a second per file and asked the network for nothing. After: 97,892 rates,
+407,851 prices, 0 open breaks, 0 revisions, 30 run reports, the six new ones `SUCCEEDED` with
+messages `replay 1 of 6` to `replay 6 of 6`. As predicted: nothing changed but the record that
+it ran.

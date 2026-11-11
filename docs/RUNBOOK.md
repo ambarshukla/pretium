@@ -35,7 +35,9 @@ refusal.
 ## A source is stale (`fresh = false`)
 
 1. Is it a publisher holiday? ECB rates are not published on TARGET closing days.
-2. Look at the last runs for that source: `FETCH_FAILED` (network, 5xx: usually transient)
+2. Look at the last runs for that source: `FETCH_FAILED` (network, 5xx: usually transient),
+   `PUBLISH_FAILED` (the source was read but Kafka did not take every message: check the
+   broker, then collect again; nothing was marked as extracted, so the same evidence is re-sent)
    or nothing at all (the collector is down: `docker compose ps`, `logs collector`).
 3. Collect now: `POST /sources/<id>/runs`.
 

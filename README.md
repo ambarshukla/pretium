@@ -16,12 +16,13 @@ language models on the same pages.
 
 ## What it does
 
-- **Collects** six real sources on their own schedules: the World Bank's *Remittance
+- **Collects** eight real sources on their own schedules: the World Bank's *Remittance
   Prices Worldwide* survey (about 200,000 provider prices across hundreds of corridors
   since 2016), the ECB's euro reference rates through three channels (an SDMX API, an
   XML file, and the public web page, scraped with CSS selectors), and the Czech National
   Bank's daily fixing through two (a text file and its web page, scraped by the same
-  extractor with a different recipe).
+  extractor with a different recipe), and the Bank of Canada's daily rates through two
+  (its API and its web page, which names currencies in words).
 - **Collects politely**: it names itself in its User-Agent, reads robots.txt first, waits
   between requests, asks conditionally (ETag), and treats a refusal as final.
 - **Keeps the evidence**: every response is stored exactly as received, named by its

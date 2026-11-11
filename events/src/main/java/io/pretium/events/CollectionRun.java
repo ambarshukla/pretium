@@ -45,6 +45,11 @@ public record CollectionRun(
     /** The source refused us (robots.txt, a 403, a bot challenge). Not retried, never bypassed. */
     BLOCKED,
     /** The request itself failed: timeout, DNS, a 5xx. Worth retrying later. */
-    FETCH_FAILED
+    FETCH_FAILED,
+    /**
+     * Fetched and extracted, but not every observation reached Kafka. The source is fine; the next
+     * run re-extracts the same evidence (nothing was marked as extracted) and sends again.
+     */
+    PUBLISH_FAILED
   }
 }

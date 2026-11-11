@@ -253,6 +253,7 @@ export const ACTION_TEXT: Record<Action, string> = {
 export const PUBLISHER: Record<string, { short: string; page: string }> = {
   "ecb-reference-html": { short: "the ECB", page: "The ECB's reference rates page" },
   "cnb-fixing-html": { short: "the CNB", page: "The Czech National Bank's fixing page" },
+  "boc-daily-html": { short: "the Bank of Canada", page: "The Bank of Canada's daily exchange rates page" },
 };
 
 /** The lab's id for an archived copy of a source's page. */

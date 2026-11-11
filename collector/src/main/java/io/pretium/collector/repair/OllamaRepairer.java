@@ -164,6 +164,10 @@ public final class OllamaRepairer {
     } else {
       settings.put("base", current.get("base", "EUR"));
     }
+    // Like the side of the pair, which name table a page uses is a fact about the source: kept.
+    if (current.get("currencyNames", null) != null) {
+      settings.put("currencyNames", current.get("currencyNames", null));
+    }
     for (String key :
         new String[] {
           "dateSelector",

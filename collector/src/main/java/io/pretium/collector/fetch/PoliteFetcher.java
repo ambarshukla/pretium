@@ -38,7 +38,14 @@ public class PoliteFetcher {
   private static final Logger log = LoggerFactory.getLogger(PoliteFetcher.class);
   private static final Duration ROBOTS_TTL = Duration.ofHours(24);
 
-  private record CachedRobots(RobotsRules rules, Instant fetchedAt) {}
+  /**
+   * How long "assume nothing is allowed" stands after robots.txt could not be read. Much shorter
+   * than a good answer's day: a server blip at 16:19 must not block the 16:20 run and every run
+   * until tomorrow.
+   */
+  static final Duration ROBOTS_RETRY = Duration.ofMinutes(15);
+
+  private record CachedRobots(RobotsRules rules, Instant expiresAt) {}
 
   private final HttpClient http;
   private final String userAgent;
@@ -144,19 +151,21 @@ public class PoliteFetcher {
   private RobotsRules robotsFor(URI uri) {
     String origin = uri.getScheme() + "://" + uri.getAuthority();
     CachedRobots cached = robots.get(origin);
-    if (cached != null && cached.fetchedAt().plus(ROBOTS_TTL).isAfter(clock.instant())) {
+    if (cached != null && cached.expiresAt().isAfter(clock.instant())) {
       return cached.rules();
     }
-    RobotsRules rules = fetchRobots(origin);
-    robots.put(origin, new CachedRobots(rules, clock.instant()));
-    return rules;
+    CachedRobots fresh = fetchRobots(origin);
+    robots.put(origin, fresh);
+    return fresh.rules();
   }
 
   /**
    * RFC 9309: a 4xx for robots.txt means "no rules", so everything is allowed; a 5xx or no answer
-   * means "assume nothing is allowed" until it can be read.
+   * means "assume nothing is allowed" until it can be read. A good answer is kept for a day; a
+   * failure only for {@link #ROBOTS_RETRY}, so the site is asked again soon.
    */
-  private RobotsRules fetchRobots(String origin) {
+  private CachedRobots fetchRobots(String origin) {
+    Instant now = clock.instant();
     try {
       waitForTurn(URI.create(origin).getHost());
       HttpRequest request =
@@ -167,24 +176,28 @@ public class PoliteFetcher {
       HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
       int status = response.statusCode();
       if (status >= 200 && status < 300) {
-        return RobotsRules.parse(response.body(), productToken);
+        return new CachedRobots(
+            RobotsRules.parse(response.body(), productToken), now.plus(ROBOTS_TTL));
       }
       if (status >= 400 && status < 500) {
-        return RobotsRules.allowAll();
+        return new CachedRobots(RobotsRules.allowAll(), now.plus(ROBOTS_TTL));
       }
       log.warn("robots.txt for {} returned {}; treating the site as disallowed", origin, status);
-      return RobotsRules.parse("User-agent: *\nDisallow: /", productToken);
+      return new CachedRobots(DISALLOW_ALL, now.plus(ROBOTS_RETRY));
     } catch (IOException e) {
       log.warn(
           "robots.txt for {} could not be read ({}); treating the site as disallowed",
           origin,
           e.toString());
-      return RobotsRules.parse("User-agent: *\nDisallow: /", productToken);
+      return new CachedRobots(DISALLOW_ALL, now.plus(ROBOTS_RETRY));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      return RobotsRules.parse("User-agent: *\nDisallow: /", productToken);
+      return new CachedRobots(DISALLOW_ALL, now.plus(ROBOTS_RETRY));
     }
   }
+
+  private static final RobotsRules DISALLOW_ALL =
+      RobotsRules.parse("User-agent: *\nDisallow: /", "pretium");
 
   private void waitForTurn(String host) throws InterruptedException {
     Instant previous = lastRequest.get(host);

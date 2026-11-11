@@ -74,6 +74,36 @@ Collected through two channels, which must agree:
   The Bank of Canada's page names currencies in words ("Australian dollar") rather than codes,
   so it needs a name-to-code table first: a candidate for later.
 
+### Bank of Canada daily exchange rates (`boc-valet-fx`, `boc-daily-html`)
+
+Collected through two channels, which must agree:
+
+| Source id | Channel | URL |
+|---|---|---|
+| `boc-valet-fx` | Valet API, CSV (the first run reads from 2017) | `www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/csv` |
+| `boc-daily-html` | Public web page, read with CSS selectors and a currency-name table | `www.bankofcanada.ca/rates/exchange/daily-exchange-rates/` |
+
+- **Terms** (Bank of Canada "Terms of Use and Disclaimers", read 9 November 2026, section 1):
+  website content may be freely used, copied, distributed and transmitted if the Bank is
+  attributed as the source, changes are indicated, and due diligence is exercised on accuracy.
+  Section 2 excepts bank note images, the logo and wordmark, and third-party content; none is
+  used. Attribution: *"Source: Bank of Canada"*. The Bank describes its rates as indicative
+  averages of quotes from financial institutions; pretium uses them as a reference.
+- **robots.txt** (read 9 November 2026) disallows only the WordPress admin path; both URLs are
+  allowed.
+- **Name table:** the page writes "Australian dollar", not "AUD".
+  `collector/src/main/resources/currency-names/boc.tsv` maps the 24 names on the page to ISO
+  codes; the codes were checked against the series list in the Valet CSV (`FXAUDCAD` is
+  described as "the Australian dollar in Canadian dollars", and so on). A name not in the table
+  stops the extraction, naming it.
+- **Why:** a third publisher with a different shape: block-structured CSV with one column per
+  currency, and a page that shows five days side by side. In May 2026 the Bank began publishing
+  the Malaysian ringgit, Polish zloty and Thai baht and stopped the Russian ruble and Saudi
+  riyal (the page says so), so the set of currencies really does change.
+- **Fixtures:** `boc-daily-2026-11-09.html` is the page as fetched on 9 November 2026,
+  unaltered. `boc-valet-2026-11-03-to-09.csv` is the Valet CSV for `start_date=2026-11-03`,
+  unaltered (five days: 3, 4, 5, 6 and 9 November).
+
 ### ISO 4217 currency codes (reference table, not collected)
 
 - **What:** which currency each country uses, for the comparison of the survey's interbank rate

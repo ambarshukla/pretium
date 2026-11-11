@@ -32,6 +32,7 @@ are ordered the same way.
 |---|---|---|
 | `ecb-sdmx-exr`, `ecb-eurofxref-daily`, `ecb-reference-html` | TARGET business days, ~16:00 CET | 96 h (a weekend plus one holiday) |
 | `cnb-fixing-txt`, `cnb-fixing-html` | Czech working days, 14:30 Prague time | 96 h |
+| `boc-valet-fx`, `boc-daily-html` | Canadian business days, by 16:30 Eastern time | 96 h |
 | `wb-rpw` | quarterly | 8 days (weekly check) |
 
 - **Indicator:** `now − max(finished_at)` of `SUCCEEDED` or `UNCHANGED` runs per source.

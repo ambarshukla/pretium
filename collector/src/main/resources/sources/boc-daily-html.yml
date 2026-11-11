@@ -1,0 +1,27 @@
+# The same rates, scraped from the Bank of Canada's public web page. A third
+# page design for the scraper: the table names currencies in words (a name
+# table turns them into codes) and shows the last five business days side by
+# side, so the recipe reads the right-hand column, the newest.
+id: boc-daily-html
+name: Bank of Canada daily exchange rates (public web page)
+publisher: Bank of Canada
+licence: >-
+  The Bank of Canada permits its website content to be freely used, copied,
+  distributed and transmitted, provided the Bank is attributed as the source
+  ("Source: Bank of Canada"), changes are indicated, and due diligence is
+  exercised on accuracy (Terms of Use, section 1). robots.txt allows this page.
+homepage: https://www.bankofcanada.ca/rates/exchange/daily-exchange-rates/
+url: https://www.bankofcanada.ca/rates/exchange/daily-exchange-rates/
+format: HTML_RATE_TABLE
+cron: "0 50 16 * * MON-FRI"
+zone: America/Toronto
+recipe:
+  version: 1
+  settings:
+    quote: CAD
+    currencyNames: boc
+    dateSelector: "table#table_daily_1 thead th:last-child"
+    dateFormat: yyyy-MM-dd
+    rowSelector: table#table_daily_1 tbody tr
+    currencySelector: th
+    rateSelector: td:last-child

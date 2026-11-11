@@ -342,7 +342,10 @@ export function LabClient({ info, startPage, startParser }: { info: LabInfo; sta
           </ul>
           <h3>Every rate, every run, against {PUBLISHER[info.source]?.short ?? "the publisher"}&apos;s data feed</h3>
           <div className="panel">
-            <ReadingsCompare columns={shown.map((r) => ({ label: r.label, readings: r.result.readings }))} />
+            <ReadingsCompare
+              columns={shown.map((r) => ({ label: r.label, readings: r.result.readings }))}
+              referenceLabel={`${PUBLISHER[info.source]?.short.replace(/^the /, "") ?? "Publisher"} reference`}
+            />
           </div>
 
           <h3>Step by step</h3>

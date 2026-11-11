@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 
 type SourceHealth = {
   sourceId: string;
-  lastStatus: string;
-  lastRunAt: string;
+  lastStatus: string | null;
+  lastRunAt: string | null;
   lastMessage: string | null;
   lastHttpStatus: number;
   recipeVersion: number;
@@ -73,6 +73,28 @@ type ChannelGroup = {
 const CHANNEL_LABEL: Record<string, string> = {
   "cnb-fixing-txt": "Text file",
   "cnb-fixing-html": "Web page (scraped)",
+  "boc-valet-fx": "Valet API (CSV)",
+  "boc-daily-html": "Web page (scraped)",
+};
+// What to say about each further publisher: its heading, what is different about it, and which
+// currency to compare with the ECB's own rate for the same pair.
+const PUBLISHER_NOTE: Record<string, { title: string; about: string; home: string; who: string; when: string }> = {
+  "cnb-fixing-txt": {
+    title: "A second publisher: the Czech National Bank",
+    about:
+      "the CNB publishes its daily fixing as a text file and as a web page, priced in korunas, some per 100 or 1,000 units (the recipe divides by the amount column).",
+    home: "CZK",
+    who: "the CNB's 14:30 fixing",
+    when: "the ECB's, set at about 14:10 CET",
+  },
+  "boc-valet-fx": {
+    title: "A third publisher: the Bank of Canada",
+    about:
+      "the Bank of Canada publishes its daily rates through an API (CSV) and on a web page that names currencies in words (“Australian dollar”), which a name table turns into codes. Rates are Canadian dollars per one unit.",
+    home: "CAD",
+    who: "the Bank of Canada's average, published by 16:30 ET",
+    when: "the ECB's, set at about 14:10 CET",
+  },
 };
 type LatestRate = { currency: string; date: string; sdmx: number | null; xml: number | null; html: number | null };
 
@@ -114,7 +136,6 @@ export default async function OpsPage() {
     apiOrNull<ChannelGroup[]>("/api/v1/rates/channels"),
   ]);
   const others = (groups ?? []).filter((g) => g.reference !== "ecb-sdmx-exr");
-  const ecbCzk = (latest ?? []).find((r) => r.currency === "CZK");
   const b = benchmark?.byPayout;
   const checked = b ? benchmark!.quotes - b.NO_REFERENCE : 0;
   const otherCurrency = b ? b.SEND_CURRENCY + b.USD + b.EUR : 0;
@@ -177,9 +198,9 @@ export default async function OpsPage() {
                 <td className="mono">{s.sourceId}</td>
                 <td>
                   <span className={`chip ${s.lastStatus === "SUCCEEDED" || s.lastStatus === "UNCHANGED" ? "ok" : "ERROR"}`}>
-                    {s.lastStatus}
+                    {s.lastStatus ?? "never run"}
                   </span>
-                  <div className="muted small">{when(s.lastRunAt)}</div>
+                  {s.lastRunAt && <div className="muted small">{when(s.lastRunAt)}</div>}
                 </td>
                 <td className="small">{when(s.lastGoodAt)}</td>
                 <td className="n">
@@ -239,20 +260,22 @@ export default async function OpsPage() {
 
       {others.map((g) => {
         const all = [g.reference, ...g.channels];
-        const eurCzk = g.rows.find((r) => r.base === "EUR" && r.quote === "CZK");
+        const note = PUBLISHER_NOTE[g.reference];
+        const home = note?.home ?? "";
+        const eurHome = g.rows.find((r) => r.base === "EUR" && r.quote === home);
+        const ecbHome = (latest ?? []).find((r) => r.currency === home);
         return (
           <section key={g.reference}>
-            <h2>A second publisher: the Czech National Bank</h2>
+            <h2>{note?.title ?? "Another publisher"}</h2>
             <p className="muted small" style={{ marginTop: 0 }}>
-              The same check for a different page: the CNB publishes its daily fixing as a text file and as a web
-              page, priced in korunas, some per 100 or 1,000 units (the recipe divides by the amount column). On{" "}
-              {g.date ?? "–"}, {g.agreeing} of {g.rows.length} currencies agree in both.
-              {eurCzk && ecbCzk && ecbCzk.date === g.date && (
+              The same check for a different page: {note?.about} On {g.date ?? "–"}, {g.agreeing} of {g.rows.length}{" "}
+              currencies agree in both.
+              {eurHome && ecbHome && ecbHome.date === g.date && (
                 <>
                   {" "}
-                  Across publishers the same pair differs, and should: EUR/CZK was {eurCzk.rates[g.reference]} at
-                  the CNB&apos;s 14:30 fixing and {ecbCzk.sdmx} in the ECB&apos;s, set at about 14:10 CET. That is
-                  why channels are only reconciled with their own publisher.
+                  Across publishers the same pair differs, and should: EUR/{home} was {eurHome.rates[g.reference]} at{" "}
+                  {note.who} and {ecbHome.sdmx} in {note.when}. That is why channels are only reconciled with their
+                  own publisher.
                 </>
               )}
             </p>

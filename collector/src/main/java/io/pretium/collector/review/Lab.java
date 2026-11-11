@@ -76,7 +76,9 @@ public class Lab {
           SOURCE,
           new Channel(TRUTH_SOURCE, ".csv", SourceSpec.Format.ECB_SDMX_CSV),
           "cnb-fixing-html",
-          new Channel("cnb-fixing-txt", ".txt", SourceSpec.Format.CNB_FIXING_TXT));
+          new Channel("cnb-fixing-txt", ".txt", SourceSpec.Format.CNB_FIXING_TXT),
+          "boc-daily-html",
+          new Channel("boc-valet-fx", ".csv", SourceSpec.Format.BOC_VALET_CSV));
   private static final Pattern SHA = Pattern.compile("[0-9a-f]{64}");
   private static final DateTimeFormatter SNAPSHOT_TIME =
       DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

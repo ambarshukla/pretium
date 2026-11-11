@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { Mark, PageViewPart, Recipe, ViewPart } from "@/lib/collector";
+import { PUBLISHER } from "@/lib/collector";
 import { viewPage } from "./actions";
 
 // One raw page in the browser: rendered (in a sandboxed frame that runs no script and
@@ -140,7 +141,7 @@ export function PageViewer({
             · <a href={display.archiveUrl}>this copy at the Internet Archive</a>
           </>
         )}
-        <span className="muted"> · Source: {pageId.includes("@") ? "CNB" : "ECB"}</span>
+        <span className="muted"> · Source: {PUBLISHER[pageId.split("@")[1] ?? "ecb-reference-html"]?.short.replace(/^the /, "") ?? "?"}</span>
       </p>
       {error && <p className="chip ERROR">{error}</p>}
       {display?.selectorError && <p className="chip ERROR">Not a valid selector: {display.selectorError}</p>}

@@ -9,7 +9,14 @@ function cell(r: Reading | undefined) {
   return { text: String(r.read), cls: Number(r.read) === Number(r.reference) ? "good" : "bad" };
 }
 
-export function ReadingsCompare({ columns }: { columns: { label: string; readings: Reading[] }[] }) {
+export function ReadingsCompare({
+  columns,
+  referenceLabel = "Reference",
+}: {
+  columns: { label: string; readings: Reading[] }[];
+  /** Who the reference column is, e.g. "ECB reference". */
+  referenceLabel?: string;
+}) {
   const reference = new Map<string, number | null>();
   for (const c of columns) {
     for (const r of c.readings) {
@@ -27,7 +34,7 @@ export function ReadingsCompare({ columns }: { columns: { label: string; reading
         <thead>
           <tr>
             <th>Currency</th>
-            <th className="n">ECB reference</th>
+            <th className="n">{referenceLabel}</th>
             {columns.map((c) => (
               <th key={c.label} className="n">
                 {c.label}

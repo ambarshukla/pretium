@@ -53,6 +53,26 @@ public class OpsController {
                                order by finished_at desc limit 1) last
          order by s.source_id
         """);
+    // A source that has never run has no row in collection_run but is still a source the operator
+    // is responsible for: it appears with no last run, stale, so a never-started schedule is seen.
+    java.util.Set<String> seen = new java.util.HashSet<>();
+    rows.forEach(r -> seen.add((String) r.get("sourceId")));
+    for (String configured : new java.util.TreeSet<>(freshness.freshness().keySet())) {
+      if (seen.add(configured)) {
+        Map<String, Object> never = new LinkedHashMap<>();
+        never.put("sourceId", configured);
+        never.put("lastStatus", null);
+        never.put("lastRunAt", null);
+        never.put("lastMessage", "never run on this server");
+        never.put("lastHttpStatus", 0);
+        never.put("recipeVersion", 0);
+        never.put("lastGoodAt", null);
+        never.put("runs7d", 0L);
+        never.put("failures7d", 0L);
+        rows.add(never);
+      }
+    }
+    rows.sort(java.util.Comparator.comparing(r -> (String) r.get("sourceId")));
     List<Map<String, Object>> out = new ArrayList<>();
     for (Map<String, Object> row : rows) {
       Map<String, Object> r = new LinkedHashMap<>(row);

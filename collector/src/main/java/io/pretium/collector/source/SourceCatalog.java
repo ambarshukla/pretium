@@ -64,6 +64,32 @@ public class SourceCatalog {
     if (spec.cron() == null || !CronExpression.isValidExpression(spec.cron())) {
       problems.add("cron is not a valid cron expression");
     }
+    if (spec.zone() != null) {
+      try {
+        java.time.ZoneId.of(spec.zone());
+      } catch (java.time.DateTimeException e) {
+        problems.add("zone '" + spec.zone() + "' is not a time zone id");
+      }
+    }
+    // A scraped page is read by its recipe alone, so a missing selector would only be found at
+    // the first scheduled run; a recipe is checked here for the keys the extractor requires.
+    if (spec.format() == SourceSpec.Format.HTML_RATE_TABLE) {
+      if (spec.recipe() == null) {
+        problems.add("an HTML source needs a recipe");
+      } else {
+        for (String key :
+            List.of(
+                "dateSelector", "dateFormat", "rowSelector", "currencySelector", "rateSelector")) {
+          if (spec.recipe().get(key, null) == null) {
+            problems.add("recipe is missing '" + key + "'");
+          }
+        }
+        if ((spec.recipe().get("base", null) == null)
+            == (spec.recipe().get("quote", null) == null)) {
+          problems.add("recipe needs exactly one of 'base' or 'quote'");
+        }
+      }
+    }
     if (!problems.isEmpty()) {
       throw new IllegalStateException("source spec " + file + " is invalid: " + problems);
     }

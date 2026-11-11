@@ -424,6 +424,7 @@ public class ReviewController {
             "base",
             "quote",
             "amountSelector",
+            "currencyNames",
             "dateSelector",
             "dateFormat",
             "dateRegex",

@@ -62,7 +62,10 @@ public class Listeners {
 
   @KafkaListener(topics = Topics.COLLECTION_RUNS)
   public void run(String message) {
-    CollectionRun run = json.readValue(message, CollectionRun.class);
+    CollectionRun run = read(message, CollectionRun.class, Topics.COLLECTION_RUNS);
+    if (run == null) {
+      return;
+    }
     store.saveRun(run);
     meters
         .counter(
@@ -70,10 +73,38 @@ public class Listeners {
         .increment();
   }
 
+  /**
+   * One message as its record, or null if it cannot be read as one. A message that is not valid
+   * JSON for its topic will never become valid however often it is retried, so it is counted and
+   * skipped on its own; the rest of its batch is still stored. (A database failure, by contrast,
+   * throws out of the listener and the whole batch is retried, which is what a transient fault
+   * needs.)
+   */
+  <T> T read(String message, Class<T> type, String topic) {
+    try {
+      return json.readValue(message, type);
+    } catch (RuntimeException e) {
+      meters.counter("pretium.catalog.messages.unreadable", "topic", topic).increment();
+      log.error(
+          "{}: unreadable message skipped ({}): {}",
+          topic,
+          e.getMessage(),
+          message.length() > 200 ? message.substring(0, 200) + "..." : message);
+      return null;
+    }
+  }
+
+  private <T> List<T> readAll(List<String> messages, Class<T> type, String topic) {
+    return messages.stream()
+        .map(m -> read(m, type, topic))
+        .filter(java.util.Objects::nonNull)
+        .toList();
+  }
+
   @KafkaListener(topics = Topics.REFERENCE_RATES, batch = "true")
   public void rates(List<String> messages) {
     List<ReferenceRateObserved> rates =
-        messages.stream().map(m -> json.readValue(m, ReferenceRateObserved.class)).toList();
+        readAll(messages, ReferenceRateObserved.class, Topics.REFERENCE_RATES);
     store.saveRates(rates);
     meters.counter("pretium.catalog.rates.stored").increment(rates.size());
     Set<LocalDate> dates = new TreeSet<>();
@@ -84,7 +115,7 @@ public class Listeners {
   @KafkaListener(topics = Topics.PROVIDER_QUOTES, batch = "true")
   public void quotes(List<String> messages) {
     List<ProviderQuoteObserved> quotes =
-        messages.stream().map(m -> json.readValue(m, ProviderQuoteObserved.class)).toList();
+        readAll(messages, ProviderQuoteObserved.class, Topics.PROVIDER_QUOTES);
     int quarantined = store.saveQuotes(quotes);
     meters.counter("pretium.catalog.quotes.stored").increment(quotes.size());
     // A quote carries one price per amount tier (200 and 500 USD), and checks judge each price, so

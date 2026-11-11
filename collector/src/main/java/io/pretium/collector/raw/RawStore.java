@@ -12,7 +12,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -70,6 +72,19 @@ public class RawStore {
       }
     }
     return out;
+  }
+
+  /**
+   * Every distinct file of a source, in the order each was first fetched. The index lists a fetch
+   * per line, and the same content fetched twice is two lines naming one file; this is the list of
+   * files, each once, which is what a replay walks.
+   */
+  public synchronized List<Entry> distinctFiles(String sourceId) throws IOException {
+    Map<String, Entry> bySha = new LinkedHashMap<>();
+    for (Entry entry : entries(sourceId)) {
+      bySha.putIfAbsent(entry.sha256(), entry);
+    }
+    return List.copyOf(bySha.values());
   }
 
   /** Hashes a downloaded file and moves it into the store. Identical content is kept once. */
@@ -133,7 +148,8 @@ public class RawStore {
     return root.resolve(sourceId).resolve(entry.file());
   }
 
-  static String sha256(Path file) throws IOException {
+  /** The SHA-256 of a file's bytes, as 64 lowercase hex characters: the name it is stored under. */
+  public static String sha256(Path file) throws IOException {
     try (InputStream in = new DigestInputStream(Files.newInputStream(file), digest())) {
       MessageDigest md = ((DigestInputStream) in).getMessageDigest();
       in.transferTo(java.io.OutputStream.nullOutputStream());

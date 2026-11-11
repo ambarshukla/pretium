@@ -49,7 +49,12 @@ class PoliteFetcherTest {
 
   HttpServer server;
   String origin;
+  String otherOrigin;
   final TestClock clock = new TestClock();
+
+  /** What /robots.txt answers when asked as the other host ("localhost"). */
+  final AtomicReference<String> otherHostRobotsBody =
+      new AtomicReference<>("User-agent: *\nAllow: /\n");
 
   /** What /robots.txt answers: the status, and the body for a 200. */
   final AtomicInteger robotsStatus = new AtomicInteger(200);
@@ -60,13 +65,18 @@ class PoliteFetcherTest {
 
   @BeforeEach
   void start() throws IOException {
-    server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    // Every interface, so the same server answers as "127.0.0.1" and as "localhost": two hosts
+    // to the fetcher, which is what the redirect tests need.
+    server = HttpServer.create(new InetSocketAddress(0), 0);
     server.createContext(
         "/robots.txt",
         ex -> {
           int status = robotsStatus.get();
-          byte[] body =
-              status == 200 ? robotsBody.get().getBytes(StandardCharsets.UTF_8) : new byte[0];
+          String rules =
+              ex.getRequestHeaders().getFirst("Host").startsWith("localhost")
+                  ? otherHostRobotsBody.get()
+                  : robotsBody.get();
+          byte[] body = status == 200 ? rules.getBytes(StandardCharsets.UTF_8) : new byte[0];
           ex.sendResponseHeaders(status, body.length == 0 ? -1 : body.length);
           try (OutputStream out = ex.getResponseBody()) {
             out.write(body);
@@ -95,8 +105,63 @@ class PoliteFetcherTest {
           ex.sendResponseHeaders(403, -1);
           ex.close();
         });
+    server.createContext(
+        "/moved",
+        ex -> {
+          ex.getResponseHeaders().add("Location", "/rates.html");
+          ex.sendResponseHeaders(302, -1);
+          ex.close();
+        });
+    server.createContext(
+        "/elsewhere",
+        ex -> {
+          ex.getResponseHeaders().add("Location", otherOrigin + "/rates.html");
+          ex.sendResponseHeaders(301, -1);
+          ex.close();
+        });
+    server.createContext(
+        "/loop",
+        ex -> {
+          ex.getResponseHeaders().add("Location", "/loop");
+          ex.sendResponseHeaders(302, -1);
+          ex.close();
+        });
     server.start();
     origin = "http://127.0.0.1:" + server.getAddress().getPort();
+    otherOrigin = "http://localhost:" + server.getAddress().getPort();
+  }
+
+  /** A redirect within the host is followed; the body comes from where it was sent on to. */
+  @Test
+  void aRedirectIsFollowed() throws IOException {
+    FetchResult moved = fetcher().fetch(origin + "/moved", Optional.empty());
+    assertThat(moved.outcome()).isEqualTo(FetchResult.Outcome.OK);
+    assertThat(Files.readString(moved.body())).isEqualTo("<html>rates</html>");
+    Files.deleteIfExists(moved.body());
+
+    FetchResult loop = fetcher().fetch(origin + "/loop", Optional.empty());
+    assertThat(loop.outcome()).isEqualTo(FetchResult.Outcome.FAILED);
+    assertThat(loop.message()).isEqualTo("too many redirects");
+  }
+
+  /**
+   * A redirect to another host is a request to that host, so its robots.txt decides. Before, the
+   * HTTP client followed it on its own and the second host was never asked.
+   */
+  @Test
+  void aRedirectToAnotherHostObeysThatHostsRobots() throws IOException {
+    otherHostRobotsBody.set("User-agent: *\nDisallow: /rates\n");
+    FetchResult refused = fetcher().fetch(origin + "/elsewhere", Optional.empty());
+    assertThat(refused.outcome()).isEqualTo(FetchResult.Outcome.BLOCKED);
+    assertThat(refused.message()).contains("redirected to").contains("robots.txt");
+
+    otherHostRobotsBody.set("User-agent: *\nAllow: /\n");
+    FetchResult allowed = fetcher().fetch(origin + "/elsewhere", Optional.of("\"v1\""));
+    assertThat(allowed.outcome()).isEqualTo(FetchResult.Outcome.OK);
+    assertThat(lastIfNoneMatch.get())
+        .as("the first URL's ETag is not offered to the address we were sent on to")
+        .isNull();
+    Files.deleteIfExists(allowed.body());
   }
 
   @AfterEach

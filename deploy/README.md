@@ -54,7 +54,29 @@ pretium.example.com {
 | Collect one source now | `docker compose exec collector curl -s -X POST localhost:8091/sources/ecb-sdmx-exr/runs` |
 | Re-extract even if unchanged | add `?force=true` |
 | Replay every event through the checks | stop `catalog`, then `docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group pretium-catalog --reset-offsets --to-earliest --all-topics --execute`, then start `catalog` |
+| Re-extract every stored evidence file | `docker compose exec collector curl -s -X POST localhost:8091/replay` (or `/sources/<id>/replay`) |
+| Dump the database now | `./backup.sh` |
 | Database shell | `docker compose exec postgres psql -U pretium` |
+
+## Backups
+
+The raw evidence under `${PRETIUM_HOST_DATA}/raw` is the only copy of what was collected;
+the database can be rebuilt from it (`docs/RUNBOOK.md`, "Losing data"). Two things make a
+rebuild quick rather than merely possible:
+
+- A nightly dump of the database. `backup.sh` writes `pretium-<utc stamp>.dump` to
+  `/opt/pretium/backups` and keeps seven days. Install it in the host user's crontab
+  (`crontab -e`); 03:10 UTC is after the last scheduled collection of the day:
+
+  ```
+  10 3 * * * /opt/pretium/src/deploy/backup.sh >> /opt/pretium/backup.log 2>&1
+  ```
+
+- A copy of `raw/` and `backups/` off the host (`rsync`, see the runbook), by hand, after a
+  week in which something was collected for the first time.
+
+A dump of 90,000 rates and 400,000 prices is 11 MB (measured 11 November 2026, against a
+database of 200 MB on disk) and takes a few seconds.
 
 ## Updating
 

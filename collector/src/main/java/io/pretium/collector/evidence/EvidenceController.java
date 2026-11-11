@@ -4,13 +4,8 @@ import io.pretium.collector.raw.RawStore;
 import io.pretium.collector.source.SourceCatalog;
 import io.pretium.collector.source.SourceSpec;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -175,15 +170,11 @@ public class EvidenceController {
         });
   }
 
+  /** The file's hash now, to compare with the name it was stored under; never throws. */
   private static String sha256(Path file) {
-    try (InputStream in = Files.newInputStream(file)) {
-      MessageDigest d = MessageDigest.getInstance("SHA-256");
-      byte[] buf = new byte[1 << 16];
-      for (int n; (n = in.read(buf)) > 0; ) {
-        d.update(buf, 0, n);
-      }
-      return HexFormat.of().formatHex(d.digest());
-    } catch (IOException | NoSuchAlgorithmException e) {
+    try {
+      return RawStore.sha256(file);
+    } catch (IOException e) {
       return "unreadable: " + e.getMessage();
     }
   }

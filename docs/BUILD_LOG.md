@@ -323,3 +323,19 @@ every one, and those pages wait for a person. Three proposals timed out.
 
 Not done: a date-only repair (keep the table selectors, replace only the date settings, verify)
 before the model is asked. It would read the July 2025 page, whose table is unchanged.
+
+## 2026-11-11 · Recovery: replay from the evidence, and a nightly dump
+
+**Built.** `POST /sources/{id}/replay` and `POST /replay` in the collector: every distinct
+stored file of a source is re-extracted with the current recipe, oldest first, with one run
+report per file (`replay 3 of 29` on the Operations page), and published again through the
+same spool and Kafka path as a live run. A file named in the index but missing from the disk is
+a reported `EXTRACTION_FAILED`, not a crash, and the replay carries on. `deploy/backup.sh` dumps
+the database nightly and keeps a week; RUNBOOK "Losing data" gives the order (dump, Kafka,
+evidence) and what each loss costs. Decision D-023.
+
+**Predicted.** Replaying a healthy system changes nothing: the catalog upserts by natural key,
+so the counts of rates, prices and breaks should be the same before and after, and the only new
+rows should be the run reports.
+
+**Observed.** Not yet run on the host; this entry is completed after the first replay there.

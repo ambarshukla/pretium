@@ -54,6 +54,23 @@ are ordered the same way.
   and the page caches for five minutes; a few minutes of outage cost little. Raising this
   means a second host, which is a cost decision, not a code change.
 
+### 5. Recovery: nothing collected is lost, and the view comes back within a day
+
+| Loss | Objective | How |
+|---|---|---|
+| The database | no published number lost; serving again within 1 hour | last night's dump, then Kafka from the dump's time (RUNBOOK, "Losing data") |
+| The database and Kafka | the same, within 1 day | replay every evidence file (`POST /replay`); the World Bank editions are the slow part |
+| The host | at most one week of newly collected evidence lost; serving within 1 day | the off-host copy of `raw/`, a fresh install, `POST /replay` |
+
+- **Indicator:** the age of the newest dump in `/opt/pretium/backups` (should be under 25 h)
+  and of the off-host copy of `raw/`.
+- **Why a week for the evidence:** the off-host copy is made by hand. The publishers still
+  serve every file collected in a normal week (daily rates are also in their history
+  endpoints), so the real exposure is a first-time backfill or a World Bank edition that is
+  later withdrawn; copy after those.
+- **Rehearsal:** `POST /replay` on a healthy system should change no stored value and open
+  no break. That is the test that the recovery path works, and it costs nothing to run.
+
 ## Error budget policy
 
 - **Accuracy has no budget.** A wrong price served → stop the line: quarantine the affected

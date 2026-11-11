@@ -23,7 +23,9 @@ locally against `infra/`.
 **Meaning.** robots.txt disallows the URL, or the site refused (401/403/451) or served a
 bot challenge.
 
-1. Check the message: robots, HTTP status, or "bot challenge served".
+1. Check the message: robots, HTTP status, "bot challenge served", or "redirected to ...,
+   which its robots.txt disallows" (the publisher moved the file to a host that does not
+   want crawlers; the redirect was not followed).
 2. Look for an official route to the same data (an API, a data catalogue, a file
    download). The World Bank survey is collected from its data catalogue for this reason.
 3. If there is none, the source is unavailable: remove its spec (the evidence stays) and

@@ -395,7 +395,15 @@ public class CollectionService {
             count,
             noted(note, sendError));
       }
-      raw.markExtracted(spec.id(), evidence.sha256(), spec.recipeVersion());
+      String message = note;
+      try {
+        raw.markExtracted(spec.id(), evidence.sha256(), spec.recipeVersion());
+      } catch (IOException e) {
+        // Everything was published, so this run succeeded; only the "already read" marker is
+        // missing, which means the next run reads the same file again (harmless: upserts).
+        log.warn("{}: extraction marker not written: {}", spec.id(), e.toString());
+        message = noted(note, "published, but the extraction marker could not be written: " + e);
+      }
       return run(
           runId,
           spec,
@@ -406,20 +414,21 @@ public class CollectionService {
           evidence.bytes(),
           evidence.sha256(),
           count,
-          note);
+          message);
     } catch (IOException e) {
+      // The spool (a temporary file) could not be written or read back: nothing was published.
       sink.finish();
       return run(
           runId,
           spec,
           url,
           started,
-          Status.FETCH_FAILED,
+          Status.EXTRACTION_FAILED,
           http,
           evidence.bytes(),
           evidence.sha256(),
           0,
-          noted(note, "could not record extraction: " + e));
+          noted(note, "could not hold the observations on disk: " + e));
     }
   }
 

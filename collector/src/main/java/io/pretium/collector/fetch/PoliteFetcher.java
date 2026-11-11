@@ -27,6 +27,8 @@ import org.springframework.stereotype.Component;
  *   <li>Identifies itself: the User-Agent names the project and a URL to read about it.
  *   <li>Reads robots.txt first (cached for a day) and does not fetch what it disallows.
  *   <li>Waits between requests to the same host.
+ *   <li>Follows a redirect only after giving its target the same two checks: a redirect to another
+ *       host is a request to that host.
  *   <li>Asks conditionally (If-None-Match) so an unchanged file is not downloaded again.
  *   <li>Treats a refusal as final. A 401, 403, 451 or a bot challenge is recorded as {@code
  *       BLOCKED} and left alone: no retries, no rotating identities, no headless-browser tricks.
@@ -45,6 +47,9 @@ public class PoliteFetcher {
    */
   static final Duration ROBOTS_RETRY = Duration.ofMinutes(15);
 
+  /** Redirect hops followed before giving up; the same limit as a browser. */
+  static final int MAX_REDIRECTS = 5;
+
   private record CachedRobots(RobotsRules rules, Instant expiresAt) {}
 
   private final HttpClient http;
@@ -61,7 +66,7 @@ public class PoliteFetcher {
       @Value("${pretium.fetch.per-host-gap:5s}") Duration perHostGap) {
     this(
         HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
+            .followRedirects(HttpClient.Redirect.NEVER)
             .connectTimeout(Duration.ofSeconds(20))
             .build(),
         userAgent,
@@ -79,45 +84,67 @@ public class PoliteFetcher {
 
   public FetchResult fetch(String url, Optional<String> knownEtag) {
     URI uri = URI.create(url);
-    String pathAndQuery =
-        uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery());
-    if (!robotsFor(uri).allows(pathAndQuery)) {
-      return new FetchResult(Outcome.BLOCKED, 0, null, null, "disallowed by robots.txt");
-    }
-
-    HttpRequest.Builder request =
-        HttpRequest.newBuilder(uri)
-            .timeout(Duration.ofMinutes(5))
-            .header("User-Agent", userAgent)
-            .header("Accept-Encoding", "identity");
-    knownEtag.ifPresent(etag -> request.header("If-None-Match", etag));
-
     Path tmp = null;
     try {
-      waitForTurn(uri.getHost());
-      tmp = Files.createTempFile("pretium-", ".download");
-      HttpResponse<Path> response =
-          http.send(request.build(), HttpResponse.BodyHandlers.ofFile(tmp));
-      int status = response.statusCode();
-      String etag = response.headers().firstValue("ETag").orElse(null);
+      // Redirects are followed by hand so that every hop gets the same treatment as the first
+      // request: its host's robots.txt, its host's gap. The client's own following would skip both.
+      URI current = uri;
+      int hops = 0;
+      while (true) {
+        String pathAndQuery =
+            current.getRawPath()
+                + (current.getRawQuery() == null ? "" : "?" + current.getRawQuery());
+        if (!robotsFor(current).allows(pathAndQuery)) {
+          deleteQuietly(tmp);
+          return new FetchResult(
+              Outcome.BLOCKED,
+              0,
+              null,
+              null,
+              hops == 0
+                  ? "disallowed by robots.txt"
+                  : "redirected to " + current + ", which its robots.txt disallows");
+        }
 
-      if (status == 304) {
-        Files.deleteIfExists(tmp);
-        return new FetchResult(Outcome.NOT_MODIFIED, status, null, etag, null);
+        HttpRequest.Builder request =
+            HttpRequest.newBuilder(current)
+                .timeout(Duration.ofMinutes(5))
+                .header("User-Agent", userAgent)
+                .header("Accept-Encoding", "identity");
+        // An ETag names one URL's version, so it is not offered to the address we were sent on to.
+        if (current.equals(uri)) {
+          knownEtag.ifPresent(etag -> request.header("If-None-Match", etag));
+        }
+
+        waitForTurn(current.getHost());
+        deleteQuietly(tmp);
+        tmp = Files.createTempFile("pretium-", ".download");
+        HttpResponse<Path> response =
+            http.send(request.build(), HttpResponse.BodyHandlers.ofFile(tmp));
+        int status = response.statusCode();
+
+        if (isRedirect(status)) {
+          Optional<String> location = response.headers().firstValue("Location");
+          if (location.isEmpty()) {
+            deleteQuietly(tmp);
+            return new FetchResult(Outcome.FAILED, status, null, null, "redirect without Location");
+          }
+          URI next = current.resolve(location.get());
+          if ("https".equals(current.getScheme()) && !"https".equals(next.getScheme())) {
+            deleteQuietly(tmp);
+            return new FetchResult(
+                Outcome.FAILED, status, null, null, "redirect from https to " + next + " refused");
+          }
+          if (++hops > MAX_REDIRECTS) {
+            deleteQuietly(tmp);
+            return new FetchResult(Outcome.FAILED, status, null, null, "too many redirects");
+          }
+          log.info("{} redirected ({}) to {}", current, status, next);
+          current = next;
+          continue;
+        }
+        return classify(response, tmp);
       }
-      if (isChallenge(response)) {
-        Files.deleteIfExists(tmp);
-        return new FetchResult(Outcome.BLOCKED, status, null, null, "bot challenge served");
-      }
-      if (status == 401 || status == 403 || status == 451) {
-        Files.deleteIfExists(tmp);
-        return new FetchResult(Outcome.BLOCKED, status, null, null, "refused with HTTP " + status);
-      }
-      if (status < 200 || status >= 300) {
-        Files.deleteIfExists(tmp);
-        return new FetchResult(Outcome.FAILED, status, null, null, "HTTP " + status);
-      }
-      return new FetchResult(Outcome.OK, status, tmp, etag, null);
     } catch (IOException e) {
       deleteQuietly(tmp);
       return new FetchResult(
@@ -127,6 +154,34 @@ public class PoliteFetcher {
       Thread.currentThread().interrupt();
       return new FetchResult(Outcome.FAILED, 0, null, null, "interrupted");
     }
+  }
+
+  /** The redirect statuses a GET may follow. */
+  private static boolean isRedirect(int status) {
+    return status == 301 || status == 302 || status == 303 || status == 307 || status == 308;
+  }
+
+  /** A final (non-redirect) response, sorted into an outcome. */
+  private FetchResult classify(HttpResponse<Path> response, Path tmp) throws IOException {
+    int status = response.statusCode();
+    String etag = response.headers().firstValue("ETag").orElse(null);
+    if (status == 304) {
+      Files.deleteIfExists(tmp);
+      return new FetchResult(Outcome.NOT_MODIFIED, status, null, etag, null);
+    }
+    if (isChallenge(response)) {
+      Files.deleteIfExists(tmp);
+      return new FetchResult(Outcome.BLOCKED, status, null, null, "bot challenge served");
+    }
+    if (status == 401 || status == 403 || status == 451) {
+      Files.deleteIfExists(tmp);
+      return new FetchResult(Outcome.BLOCKED, status, null, null, "refused with HTTP " + status);
+    }
+    if (status < 200 || status >= 300) {
+      Files.deleteIfExists(tmp);
+      return new FetchResult(Outcome.FAILED, status, null, null, "HTTP " + status);
+    }
+    return new FetchResult(Outcome.OK, status, tmp, etag, null);
   }
 
   /** Cloudflare marks its challenge pages with a header; the body check catches older setups. */

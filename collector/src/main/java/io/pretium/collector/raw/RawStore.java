@@ -148,7 +148,8 @@ public class RawStore {
     return root.resolve(sourceId).resolve(entry.file());
   }
 
-  static String sha256(Path file) throws IOException {
+  /** The SHA-256 of a file's bytes, as 64 lowercase hex characters: the name it is stored under. */
+  public static String sha256(Path file) throws IOException {
     try (InputStream in = new DigestInputStream(Files.newInputStream(file), digest())) {
       MessageDigest md = ((DigestInputStream) in).getMessageDigest();
       in.transferTo(java.io.OutputStream.nullOutputStream());

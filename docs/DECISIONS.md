@@ -284,3 +284,23 @@ The choices that shape pretium, why they were made, and what was given up. Newes
 - **Rejected:** a cross-publisher tolerance (any threshold is arbitrary, and it would hide a
   real parsing error of the same size); converting the CNB's rates to per-euro (a division,
   so the stored number would no longer be the published one).
+
+## D-023 · The evidence is the backup; the database is rebuilt, not restored, when in doubt
+
+- **Choice:** the raw store (every response, by hash) is the one copy that must survive, and
+  is copied off the host. The database is dumped nightly for speed, but the authoritative
+  rebuild is a *replay from the evidence*: the collector re-extracts every stored file of a
+  source with the current recipe, oldest first, and publishes the results again
+  (`POST /replay`). Kafka's 90 days are a buffer, not an archive.
+- **Why:** a dump restores yesterday's verdicts under yesterday's rules; a replay produces
+  today's verdicts under today's rules from the same files, and the two can be compared.
+  Upserts and per-key ordering (D-004, D-010) are what make a replay a no-op when nothing has
+  changed, so the recovery procedure can be rehearsed on a healthy system. The same command
+  is how a changed recipe is applied to old files, so it is exercised, not kept for a bad day.
+- **Oldest first** because a publisher's later file can correct an earlier value, and the
+  catalog records that as a revision; replaying in fetch order reproduces the revisions in
+  the order they happened.
+- **Rejected:** streaming replication or a second database (a second host for a view of
+  files that already exist); backing up Kafka (it would be a copy of a copy); a rebuild that
+  bypasses Kafka and writes to the database directly (the checks and the revision log live on
+  the consuming side, and a second write path would be a second set of rules).

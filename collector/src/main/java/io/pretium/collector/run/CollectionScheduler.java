@@ -71,4 +71,16 @@ public class CollectionScheduler {
           }
         });
   }
+
+  /** Starts a replay of every stored evidence file of a source in the background. */
+  public void submitReplay(SourceSpec spec) {
+    workers.execute(
+        () -> {
+          try {
+            service.replay(spec);
+          } catch (RuntimeException e) {
+            log.error("{}: replay did not complete", spec.id(), e);
+          }
+        });
+  }
 }

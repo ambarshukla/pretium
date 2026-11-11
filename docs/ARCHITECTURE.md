@@ -47,7 +47,9 @@ classifies the response:
 
 `RawStore` hashes the body, stores it as `<source>/<sha256>.<ext>`, and appends a line to
 the source's `index.jsonl`. The hash travels with every observation to the database and
-the API, so any number on the page leads back to one file.
+the API, so any number on the page leads back to one file. The store is also the backup:
+`POST /replay` walks the index and re-extracts every distinct file with the current recipe,
+oldest first, which rebuilds everything downstream (D-023, RUNBOOK "Losing data").
 
 ## 4. Extraction
 

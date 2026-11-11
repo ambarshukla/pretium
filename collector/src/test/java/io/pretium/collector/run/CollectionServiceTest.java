@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.pretium.collector.extract.EcbEurofxrefXmlExtractor;
+import io.pretium.collector.extract.EcbSdmxCsvExtractor;
 import io.pretium.collector.extract.ExtractionException;
 import io.pretium.collector.extract.Extractor;
 import io.pretium.collector.extract.HtmlRateTableExtractor;
@@ -280,6 +281,60 @@ class CollectionServiceTest {
     // Nothing was marked as extracted, so the next run reads the same evidence again.
     assertThat(new RawStore(rawDir).alreadyExtracted("ecb-eurofxref-daily", run.sha256(), 0))
         .isFalse();
+  }
+
+  /**
+   * The recovery path. Three fetches stored two distinct files (the first one came back twice); a
+   * replay reads each file once, oldest first, with its own run report, and publishes every rate
+   * again. Nothing is fetched: the network is not asked.
+   */
+  @Test
+  void aReplayReExtractsEveryDistinctEvidenceFileOldestFirst() throws Exception {
+    SourceSpec spec = spec("ecb-sdmx-exr", SourceSpec.Format.ECB_SDMX_CSV, null);
+    CollectionService service = service(new EcbSdmxCsvExtractor());
+    serve("ecb-sdmx-2026-10-29.csv");
+    CollectionRun first = service.collect(spec, false);
+    serve("ecb-sdmx-2026-11-03.csv");
+    CollectionRun second = service.collect(spec, false);
+    serve("ecb-sdmx-2026-10-29.csv");
+    service.collect(spec, true); // the same content again: a third fetch, not a third file
+    sent.clear();
+    asked.clear();
+
+    List<CollectionRun> replayed = service.replay(spec);
+
+    assertThat(replayed)
+        .extracting(CollectionRun::sha256, CollectionRun::status, CollectionRun::message)
+        .containsExactly(
+            org.assertj.core.groups.Tuple.tuple(first.sha256(), Status.SUCCEEDED, "replay 1 of 2"),
+            org.assertj.core.groups.Tuple.tuple(
+                second.sha256(), Status.SUCCEEDED, "replay 2 of 2"));
+    assertThat(replayed).extracting(CollectionRun::httpStatus).containsOnly(0);
+    assertThat(sentTo(Topics.REFERENCE_RATES)).isEqualTo(first.extracted() + second.extracted());
+    assertThat(sentTo(Topics.COLLECTION_RUNS)).isEqualTo(2);
+    assertThat(asked).isEmpty();
+    // The replay ends on the newest file, so the next scheduled run still knows it was read.
+    assertThat(new RawStore(rawDir).alreadyExtracted("ecb-sdmx-exr", second.sha256(), 0)).isTrue();
+  }
+
+  /** An index line whose file is gone (a partial restore) is a reported failure, not a crash. */
+  @Test
+  void aReplayReportsAnEvidenceFileThatIsMissingAndCarriesOn() throws Exception {
+    SourceSpec spec = spec("ecb-sdmx-exr", SourceSpec.Format.ECB_SDMX_CSV, null);
+    CollectionService service = service(new EcbSdmxCsvExtractor());
+    serve("ecb-sdmx-2026-10-29.csv");
+    CollectionRun first = service.collect(spec, false);
+    serve("ecb-sdmx-2026-11-03.csv");
+    CollectionRun second = service.collect(spec, false);
+    Files.delete(rawDir.resolve("ecb-sdmx-exr").resolve(first.sha256() + ".csv"));
+
+    List<CollectionRun> replayed = service.replay(spec);
+
+    assertThat(replayed)
+        .extracting(CollectionRun::status)
+        .containsExactly(Status.EXTRACTION_FAILED, Status.SUCCEEDED);
+    assertThat(replayed.get(0).message()).contains("replay 1 of 2").contains("missing");
+    assertThat(replayed.get(1).extracted()).isEqualTo(second.extracted());
   }
 
   @Test

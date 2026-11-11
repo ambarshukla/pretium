@@ -12,9 +12,11 @@ import io.pretium.events.CollectionRun;
 import io.pretium.events.CollectionRun.Status;
 import io.pretium.events.Topics;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -75,27 +77,102 @@ public class CollectionService {
    * @param force re-download and re-extract even if the source is unchanged
    */
   public CollectionRun collect(SourceSpec spec, boolean force) {
+    ReentrantLock lock = lock(spec);
+    try {
+      return report(spec, attempt(spec, force));
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Re-extracts every file ever stored for a source with the recipe in use now, oldest first, and
+   * publishes what each one yields, with one run report per file.
+   *
+   * <p>This is the recovery path. The raw store is the only copy of the evidence; the database is a
+   * view of it that the checks derive, and Kafka keeps ninety days. When either of those is lost,
+   * or a recipe has changed and old files should be read with it, this rebuilds the view from the
+   * files. Oldest first, so that a value a publisher later corrected ends with the correction, as
+   * it did the first time. Publishing is idempotent downstream (the catalog upserts by natural
+   * key), so a replay of what is already there changes nothing.
+   *
+   * <p>Holds the source's lock throughout: a scheduled run that falls due meanwhile is refused, not
+   * queued, and runs again at its next time.
+   */
+  public List<CollectionRun> replay(SourceSpec spec) {
+    ReentrantLock lock = lock(spec);
+    try {
+      List<RawStore.Entry> files;
+      try {
+        files = raw.distinctFiles(spec.id());
+      } catch (IOException e) {
+        return List.of(
+            report(
+                spec,
+                run(
+                    UUID.randomUUID().toString(),
+                    spec,
+                    spec.url(),
+                    clock.instant(),
+                    Status.FETCH_FAILED,
+                    0,
+                    0,
+                    null,
+                    0,
+                    "replay: raw store unreadable: " + e)));
+      }
+      log.info("{}: replaying {} evidence files", spec.id(), files.size());
+      List<CollectionRun> runs = new ArrayList<>(files.size());
+      int i = 0;
+      for (RawStore.Entry evidence : files) {
+        i++;
+        String note = "replay " + i + " of " + files.size();
+        String runId = UUID.randomUUID().toString();
+        Instant started = clock.instant();
+        CollectionRun run =
+            Files.exists(raw.pathOf(spec.id(), evidence))
+                ? extractAndPublish(runId, spec, evidence.url(), started, 0, evidence, true, note)
+                : run(
+                    runId,
+                    spec,
+                    evidence.url(),
+                    started,
+                    Status.EXTRACTION_FAILED,
+                    0,
+                    evidence.bytes(),
+                    evidence.sha256(),
+                    0,
+                    note + ": evidence file " + evidence.file() + " is missing from the store");
+        runs.add(report(spec, run));
+      }
+      return List.copyOf(runs);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  private ReentrantLock lock(SourceSpec spec) {
     ReentrantLock lock = locks.computeIfAbsent(spec.id(), id -> new ReentrantLock());
     if (!lock.tryLock()) {
       throw new IllegalStateException(spec.id() + " is already being collected");
     }
-    try {
-      CollectionRun run = attempt(spec, force);
-      kafka.send(Topics.COLLECTION_RUNS, spec.id(), json.writeValueAsString(run));
-      kafka.flush();
-      record(spec, run);
-      log.info(
-          "{}: {} (http {}, {} bytes, {} observations){}",
-          spec.id(),
-          run.status(),
-          run.httpStatus(),
-          run.bytes(),
-          run.extracted(),
-          run.message() == null ? "" : " - " + run.message());
-      return run;
-    } finally {
-      lock.unlock();
-    }
+    return lock;
+  }
+
+  /** Publishes the run report after everything it describes, counts the run, and logs it. */
+  private CollectionRun report(SourceSpec spec, CollectionRun run) {
+    kafka.send(Topics.COLLECTION_RUNS, spec.id(), json.writeValueAsString(run));
+    kafka.flush();
+    record(spec, run);
+    log.info(
+        "{}: {} (http {}, {} bytes, {} observations){}",
+        spec.id(),
+        run.status(),
+        run.httpStatus(),
+        run.bytes(),
+        run.extracted(),
+        run.message() == null ? "" : " - " + run.message());
+    return run;
   }
 
   /**
@@ -235,6 +312,26 @@ public class CollectionService {
       default -> throw new IllegalStateException("unknown outcome " + fetched.outcome());
     }
 
+    return extractAndPublish(
+        runId, spec, url, started, fetched.httpStatus(), evidence, force, null);
+  }
+
+  /**
+   * The second half of a run, from a stored evidence file onwards: skip it if this recipe has read
+   * it before (unless forced), extract, publish, mark it read.
+   *
+   * @param note for a replay, which file of how many; prefixed to the message, null otherwise
+   */
+  private CollectionRun extractAndPublish(
+      String runId,
+      SourceSpec spec,
+      String url,
+      Instant started,
+      int http,
+      RawStore.Entry evidence,
+      boolean force,
+      String note) {
+    Extractor extractor = extractors.get(spec.format());
     try {
       if (!force && raw.alreadyExtracted(spec.id(), evidence.sha256(), spec.recipeVersion())) {
         return run(
@@ -243,7 +340,7 @@ public class CollectionService {
             url,
             started,
             Status.UNCHANGED,
-            fetched.httpStatus(),
+            http,
             evidence.bytes(),
             evidence.sha256(),
             0,
@@ -275,11 +372,13 @@ public class CollectionService {
             url,
             started,
             Status.EXTRACTION_FAILED,
-            fetched.httpStatus(),
+            http,
             evidence.bytes(),
             evidence.sha256(),
             0,
-            e instanceof ExtractionException ? e.getMessage() : "unexpected error: " + e);
+            noted(
+                note,
+                e instanceof ExtractionException ? e.getMessage() : "unexpected error: " + e));
       }
       spool.replay(sink::send);
       String sendError = sink.finish();
@@ -290,11 +389,11 @@ public class CollectionService {
             url,
             started,
             Status.PUBLISH_FAILED,
-            fetched.httpStatus(),
+            http,
             evidence.bytes(),
             evidence.sha256(),
             count,
-            sendError);
+            noted(note, sendError));
       }
       raw.markExtracted(spec.id(), evidence.sha256(), spec.recipeVersion());
       return run(
@@ -303,11 +402,11 @@ public class CollectionService {
           url,
           started,
           Status.SUCCEEDED,
-          fetched.httpStatus(),
+          http,
           evidence.bytes(),
           evidence.sha256(),
           count,
-          null);
+          note);
     } catch (IOException e) {
       sink.finish();
       return run(
@@ -316,12 +415,16 @@ public class CollectionService {
           url,
           started,
           Status.FETCH_FAILED,
-          fetched.httpStatus(),
+          http,
           evidence.bytes(),
           evidence.sha256(),
           0,
-          "could not record extraction: " + e);
+          noted(note, "could not record extraction: " + e));
     }
+  }
+
+  private static String noted(String note, String message) {
+    return note == null ? message : note + ": " + message;
   }
 
   private CollectionRun run(
